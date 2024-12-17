@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/vcaldo/cerverox9/discord/handlers"
+	"github.com/vcaldo/cerverox9/discord/pkg/handlers"
 )
 
 func main() {
