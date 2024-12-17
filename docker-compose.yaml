@@ -20,6 +20,6 @@ services:
       - TZ=Etc/UTC
     env_file:
       - secrets.env
-    restart: unless-stopped    
+    restart: unless-stopped
 volumes:
-  redis-data:    
+  redis-data:
