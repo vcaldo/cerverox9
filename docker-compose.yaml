@@ -1,0 +1,25 @@
+services:
+  discord-bot:
+    image: discord-bot:latest
+    container_name: discord-bot
+    build:
+      context: discord/
+      dockerfile: Dockerfile
+    environment:
+      - TZ=Etc/UTC
+    env_file:
+      - secrets.env
+    restart: unless-stopped
+  telegram-bot:
+    image: telegram-bot:latest
+    container_name: telegram-bot
+    build:
+      context: telegram/
+      dockerfile: Dockerfile
+    environment:
+      - TZ=Etc/UTC
+    env_file:
+      - secrets.env
+    restart: unless-stopped    
+volumes:
+  redis-data:    
