@@ -1,4 +1,4 @@
-module github.com/cerverox9/discord
+module github.com/vcaldo/cerverox9/discord
 
 go 1.23.4
 

@@ -1,3 +1,3 @@
-module github.com/cerverox9/telegram
+module github.com/vcaldo/cerverox9/telegram
 
 go 1.23.4
