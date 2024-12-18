@@ -6,7 +6,7 @@ import (
 	"github.com/vcaldo/cerverox9/telegram/pkg/models"
 )
 
-func GetVoiceCallStatus() (int, error) {
+func GetVoiceCallStatus() (int64, error) {
 	influx := models.NewAuthenticatedVoiceMetricsClient()
 	guildID := os.Getenv("DISCORD_GUILD_ID")
 	onlineUsers, err := influx.GetVoiceChatOnlineUsers(guildID)
