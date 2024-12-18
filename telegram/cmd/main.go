@@ -48,7 +48,7 @@ func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		}
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   fmt.Sprintf("%s users estão se divertindo na festa online", onlineUsers),
+			Text:   fmt.Sprintf("%d users estão se divertindo na festa online", onlineUsers),
 		})
 		return
 	}

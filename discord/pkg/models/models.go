@@ -93,10 +93,12 @@ func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int, error) {
 		vm.bucket, OnlineUsersMeasurement, guildID)
 	log.Println("Running query:", query)
 	queryAPI := vm.client.QueryAPI(vm.org)
+	log.Printf("Query API %v:", queryAPI)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
 		return 0, fmt.Errorf("error querying for online users: %v", err)
 	}
+	log.Printf("Result: %v", result)
 	defer result.Close()
 
 	if result.Next() {
