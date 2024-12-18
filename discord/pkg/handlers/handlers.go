@@ -9,7 +9,7 @@ import (
 )
 
 func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
-	influx := models.NewAuthenticatedVoiceMetricsClient()
+	influx := models.NewAuthenticatedDiscordMetricsClient()
 	switch {
 	// User joined a voice channel
 	case vsu.BeforeUpdate == nil && vsu.ChannelID != "":
@@ -130,7 +130,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 }
 
 func RegisterVoiceChannelUsers(s *discordgo.Session) error {
-	influx := models.NewAuthenticatedVoiceMetricsClient()
+	influx := models.NewAuthenticatedDiscordMetricsClient()
 
 	guilds, err := s.UserGuilds(200, "", "", true)
 	if err != nil {

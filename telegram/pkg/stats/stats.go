@@ -7,7 +7,7 @@ import (
 )
 
 func GetVoiceCallStatus() (int64, string, error) {
-	influx := models.NewAuthenticatedVoiceMetricsClient()
+	influx := models.NewAuthenticatedDiscordMetricsClient()
 	guildID := os.Getenv("DISCORD_GUILD_ID")
 	onlineUsers, userList, err := influx.GetVoiceChatOnlineUsers(guildID)
 	if err != nil {

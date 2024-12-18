@@ -21,15 +21,15 @@ const (
 	StateKey               = "state"
 )
 
-type VoiceMetrics struct {
+type DiscordMetrics struct {
 	client influxdb2.Client
 	org    string
 	bucket string
 	url    string
 }
 
-func NewAuthenticatedVoiceMetricsClient() *VoiceMetrics {
-	return newVoiceMetricsClient(
+func NewAuthenticatedDiscordMetricsClient() *DiscordMetrics {
+	return newDiscordMetricsClient(
 		os.Getenv("INFLUX_URL"),
 		os.Getenv("INFLUX_TOKEN"),
 		os.Getenv("INFLUX_ORG"),
@@ -37,12 +37,12 @@ func NewAuthenticatedVoiceMetricsClient() *VoiceMetrics {
 	)
 }
 
-func newVoiceMetricsClient(url, token, org, bucket string) *VoiceMetrics {
+func newDiscordMetricsClient(url, token, org, bucket string) *DiscordMetrics {
 	if !strings.HasPrefix(url, "http") {
 		url = fmt.Sprintf("http://%s", url)
 	}
 	client := influxdb2.NewClient(url, token)
-	return &VoiceMetrics{
+	return &DiscordMetrics{
 		client: client,
 		org:    org,
 		bucket: bucket,
@@ -50,7 +50,7 @@ func newVoiceMetricsClient(url, token, org, bucket string) *VoiceMetrics {
 	}
 }
 
-func (vm *VoiceMetrics) LogVoiceEvent(userID, username, channelID, eventType string, state bool) error {
+func (vm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType string, state bool) error {
 	writeAPI := vm.client.WriteAPIBlocking(vm.org, vm.bucket)
 
 	p := influxdb2.NewPoint(VoiceEventsMeasurement,
@@ -69,7 +69,7 @@ func (vm *VoiceMetrics) LogVoiceEvent(userID, username, channelID, eventType str
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (vm *VoiceMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
+func (vm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
 	writeAPI := vm.client.WriteAPIBlocking(vm.org, vm.bucket)
 
 	p := influxdb2.NewPoint(OnlineUsersMeasurement,
@@ -86,7 +86,7 @@ func (vm *VoiceMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string, error) {
+func (vm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string, error) {
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: -10m)
 		|> filter(fn: (r) => r._measurement == "%s" and r.guild_id == "%s")
