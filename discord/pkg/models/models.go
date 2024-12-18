@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -28,7 +29,7 @@ type VoiceMetrics struct {
 
 func NewVoiceMetrics(url, token, org, bucket string) *VoiceMetrics {
 	if !strings.HasPrefix(url, "http") {
-		url = "http://" + url
+		url = fmt.Sprintf("http://%s", url)
 	}
 	client := influxdb2.NewClient(url, token)
 	return &VoiceMetrics{
