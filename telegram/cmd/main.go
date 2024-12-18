@@ -21,17 +21,11 @@ func main() {
 
 	token := os.Getenv("TELEGRAM_BOT_TOKEN")
 	b, err := bot.New(token, opts...)
-	// b, err := bot.New(token)
 	if err != nil {
 		panic(err)
 	}
 
 	b.Start(ctx)
-
-	// Start the bot in a goroutine
-	// go func() {
-	// 	b.Start(ctx)
-	// }()
 
 }
 
