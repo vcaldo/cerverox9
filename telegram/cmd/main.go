@@ -25,8 +25,13 @@ func main() {
 		panic(err)
 	}
 
-	b.Start(ctx)
+	// Start the bot in a goroutine
+	go func() {
+		b.Start(ctx)
+	}()
 
+	// Wait for the context to be done
+	select {}
 }
 
 func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
