@@ -3,7 +3,7 @@ package stats
 import (
 	"os"
 
-	"github.com/vcaldo/cerverox9/discord/pkg/models"
+	"github.com/vcaldo/cerverox9/telegram/pkg/models"
 )
 
 func GetVoiceCallStatus() (int, error) {
