@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"github.com/vcaldo/cerverox9/telegram/pkg/stats"
 )
 
 func main() {
@@ -31,5 +33,20 @@ func main() {
 }
 
 func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
-
+	switch {
+	case update.Message != nil && update.Message.Text == "/status":
+		onlineUsers, err := stats.GetVoiceCallStatus()
+		if err != nil {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   "Erro ao buscar status da festa online",
+			})
+			return
+		}
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   fmt.Sprintf("%s users estão se divertindo na festa online", onlineUsers),
+		})
+		return
+	}
 }
