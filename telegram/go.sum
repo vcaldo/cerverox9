@@ -25,6 +25,8 @@ github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcU
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/vcaldo/cerverox9/discord v0.0.0-20241218202239-566b53303da2 h1:oSXQr43+QY5ZxH03ngLiNjpzs3G0wp6IseILsbyJi1Q=
 github.com/vcaldo/cerverox9/discord v0.0.0-20241218202239-566b53303da2/go.mod h1:BAm5/M4pCRknXM91Snb2q8KqKxk6UiPE1BUwcmIy19s=
+github.com/vcaldo/cerverox9/discord v0.0.0-20241218212035-96672ef69624 h1:VvcBn64xD7prVARa7XsIZr6SFyy0/OyN0HVAU3LSo78=
+github.com/vcaldo/cerverox9/discord v0.0.0-20241218212035-96672ef69624/go.mod h1:BAm5/M4pCRknXM91Snb2q8KqKxk6UiPE1BUwcmIy19s=
 golang.org/x/net v0.33.0 h1:74SYHlV8BIgHIFC/LrYkOGIwL19eTYXQ5wc6TBuO36I=
 golang.org/x/net v0.33.0/go.mod h1:HXLR5J+9DxmrqMwG9qjGCxZ+zKXxBru04zlTvWlWuN4=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
