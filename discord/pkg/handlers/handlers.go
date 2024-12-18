@@ -155,7 +155,7 @@ func RegisterVoiceChannelUsers(s *discordgo.Session) error {
 					continue
 				}
 
-				onlineUsers = append(onlineUsers, user.Username)
+				onlineUsers = append(onlineUsers, fmt.Sprintf("%s - %s", user.Username, user.GlobalName))
 			}
 		}
 
