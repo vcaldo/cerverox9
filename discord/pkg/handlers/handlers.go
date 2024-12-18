@@ -140,14 +140,22 @@ func RegisterVoiceChannelUsers(s *discordgo.Session) error {
 			continue
 		}
 		totalUsers := 0
+		onlineUsers := []string{}
 		for _, member := range members {
 			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
 			if vs != nil && vs.ChannelID != "" {
 				totalUsers++
+				user, err := s.User(member.User.ID)
+				if err != nil {
+					log.Printf("error fetching user %s: %v", member.User.ID, err)
+					continue
+				}
+
+				onlineUsers = append(onlineUsers, user.Username)
 			}
 		}
 
-		err = influx.LogOnlineUsers(guildID, totalUsers)
+		err = influx.LogOnlineUsers(guildID, totalUsers, onlineUsers)
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
 		}

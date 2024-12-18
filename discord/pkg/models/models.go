@@ -69,12 +69,13 @@ func (vm *VoiceMetrics) LogVoiceEvent(userID, username, channelID, eventType str
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (vm *VoiceMetrics) LogOnlineUsers(guildID string, onlineUsers int) error {
+func (vm *VoiceMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
 	writeAPI := vm.client.WriteAPIBlocking(vm.org, vm.bucket)
 
 	p := influxdb2.NewPoint(OnlineUsersMeasurement,
 		map[string]string{
-			"guild_id": guildID,
+			"guild_id":  guildID,
+			"user_list": strings.Join(userList, ","),
 		},
 		map[string]interface{}{
 			"online_users": onlineUsers,
@@ -104,5 +105,6 @@ func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, error) {
 		onlineUsers := record.Value().(int64)
 		return onlineUsers, nil
 	}
+
 	return 0, fmt.Errorf("no online users found for guild %s", guildID)
 }
