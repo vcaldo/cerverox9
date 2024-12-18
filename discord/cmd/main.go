@@ -40,7 +40,7 @@ func main() {
 	go handlers.RegisterVoiceChannelUsers(dg)
 
 	// Update the number of users in voice channels every 60 seconds
-	ticker := time.NewTicker(60 * time.Second)
+	ticker := time.NewTicker(300 * time.Second)
 	defer ticker.Stop()
 	go func() {
 		for {
