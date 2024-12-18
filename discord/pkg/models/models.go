@@ -103,8 +103,8 @@ func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int, error) {
 
 	if result.Next() {
 		record := result.Record()
-		log.Printf("Record: %v", record.Values())
-		onlineUsers := record.Values()[OnlineUsersMeasurement].(int)
+		log.Printf("Record: %v", record.Values()["_value"])
+		onlineUsers := record.Value().(int)
 		return onlineUsers, nil
 	}
 	return 0, fmt.Errorf("no online users found for guild %s", guildID)
