@@ -85,21 +85,21 @@ func (vm *VoiceMetrics) LogOnlineUsers(guildID string, onlineUsers int) error {
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (string, error) {
+func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, error) {
 	query := fmt.Sprintf(`from(bucket:"%s")|> range(start: -10m) |> filter(fn: (r) => r._measurement == "%s" and r.guild_id == "%s") |> last()`,
 		vm.bucket, OnlineUsersMeasurement, guildID)
 	log.Println("Running query:", query)
 	queryAPI := vm.client.QueryAPI(vm.org)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
-		return "", fmt.Errorf("error querying for online users: %v", err)
+		return 0, fmt.Errorf("error querying for online users: %v", err)
 	}
 	defer result.Close()
 
 	for result.Next() {
 		record := result.Record()
-		onlineUsers := record.Values()["online_users"].(string)
+		onlineUsers := record.Values()["online_users"].(int64)
 		return onlineUsers, nil
 	}
-	return "", nil
+	return 0, nil
 }
