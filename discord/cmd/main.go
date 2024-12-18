@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
@@ -13,7 +13,7 @@ func main() {
 
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
+		log.Println("error creating Discord session,", err)
 		return
 	}
 
@@ -21,10 +21,10 @@ func main() {
 
 	err = dg.Open()
 	if err != nil {
-		fmt.Println("error opening connection,", err)
+		log.Println("error opening connection,", err)
 		return
 	}
 
-	fmt.Println("Bot is now running. Press CTRL+C to exit.")
+	log.Println("Bot is now running.")
 	select {}
 }
