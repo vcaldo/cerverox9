@@ -64,7 +64,7 @@ func (vm *VoiceMetrics) LogVoiceEvent(userID, username, channelID, eventType str
 			StateKey: state,
 		},
 		time.Now())
-	log.Printf("Writing point: %s, %s, %t", username, eventType, state)
+	log.Printf("Writing point: %s, %s, %t in %s measurement", username, eventType, state, VoiceEventsMeasurement)
 
 	return writeAPI.WritePoint(context.Background(), p)
 }
@@ -79,7 +79,7 @@ func (vm *VoiceMetrics) LogOnlineUsers(guildID string, onlineUsers int) error {
 			"online_users": onlineUsers,
 		},
 		time.Now())
-	log.Printf("Writing point: %s, %d", guildID, onlineUsers)
+	log.Printf("Writing point: %s, %d in %s measurement", guildID, onlineUsers, OnlineUsersMeasurement)
 
 	return writeAPI.WritePoint(context.Background(), p)
 }

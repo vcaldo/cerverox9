@@ -115,7 +115,6 @@ func UpdateUsersInVoiceChannels(s *discordgo.Session) error {
 		return fmt.Errorf("error fetching guilds: %v", err)
 	}
 	for _, guild := range guilds {
-		log.Printf("Guild: %s", guild.Name)
 		guildID := guild.ID
 		members, err := s.GuildMembers(guildID, "", 1000)
 		if err != nil {
@@ -134,6 +133,7 @@ func UpdateUsersInVoiceChannels(s *discordgo.Session) error {
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
 		}
+		log.Printf("Logged %d users in voice channels for guild %s", totalUsers, guildID)
 	}
 	return nil
 }
