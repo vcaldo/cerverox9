@@ -1,8 +1,21 @@
 package main
 
-import "log"
+import (
+	"os"
+	"os/signal"
+	"syscall"
+)
 
 func main() {
-	log.Println("Telegram Bot is now running.")
-	select {}
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
+
+	// Wait for interrupt signal
+	<-done
+
+	// Create a channel that will never receive data
+	forever := make(chan struct{})
+
+	// Block indefinitely
+	<-forever
 }
