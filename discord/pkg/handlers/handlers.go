@@ -25,6 +25,8 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			log.Println("error counting users in voice channels,", err)
 			return
 		}
+		// Update user list when a user joins
+		RegisterVoiceChannelUsers(s)
 	// User left a voice channel
 	case vsu.ChannelID == "":
 		user, err := s.User(vsu.UserID)
@@ -39,6 +41,8 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			log.Println("error counting users in voice channels,", err)
 			return
 		}
+		// Update user list when a user joins
+		RegisterVoiceChannelUsers(s)
 	// User switched voice channels
 	case vsu.ChannelID != "" && vsu.BeforeUpdate.ChannelID != vsu.ChannelID:
 		user, err := s.User(vsu.UserID)

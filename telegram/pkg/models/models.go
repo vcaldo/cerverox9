@@ -85,24 +85,30 @@ func (vm *VoiceMetrics) LogOnlineUsers(guildID string, onlineUsers int) error {
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, error) {
+func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string, error) {
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: -10m)
 		|> filter(fn: (r) => r._measurement == "%s" and r.guild_id == "%s")
+		|> group(columns: ["guild_id"])
+		|> sort(columns: ["_time"], desc: true)
+		|> limit(n: 1)
 		|> last()`,
+
 		vm.bucket, OnlineUsersMeasurement, guildID)
 	log.Println("Running query:", query)
 	queryAPI := vm.client.QueryAPI(vm.org)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
-		return 0, fmt.Errorf("error querying for online users: %v", err)
+		return 0, "", fmt.Errorf("error querying for online users: %v", err)
 	}
 	defer result.Close()
 
-	if result.Next() {
+	for result.Next() {
 		record := result.Record()
 		onlineUsers := record.Value().(int64)
-		return onlineUsers, nil
+		usersList := record.Values()["user_list"].(string)
+		return onlineUsers, usersList, nil
 	}
-	return 0, fmt.Errorf("no online users found for guild %s", guildID)
+
+	return 0, "", fmt.Errorf("no online users found for guild %s", guildID)
 }
