@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -12,12 +13,12 @@ import (
 
 const (
 	VoiceEventsMeasurement = "voice_events"
+	OnlineUsersMeasurement = "online_users"
 	UserIdKey              = "user_id"
 	UsernameKey            = "username"
 	ChannelIdKey           = "channel_id"
 	EventTypeKey           = "event_type"
 	StateKey               = "state"
-	DefaultOrg             = "discord_org"
 )
 
 type VoiceMetrics struct {
@@ -27,14 +28,23 @@ type VoiceMetrics struct {
 	url    string
 }
 
-func NewVoiceMetrics(url, token, org, bucket string) *VoiceMetrics {
+func NewAuthenticatedVoiceMetricsClient() *VoiceMetrics {
+	return newVoiceMetricsClient(
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_TOKEN"),
+		os.Getenv("INFLUX_ORG"),
+		os.Getenv("INFLUX_BUCKET"),
+	)
+}
+
+func newVoiceMetricsClient(url, token, org, bucket string) *VoiceMetrics {
 	if !strings.HasPrefix(url, "http") {
 		url = fmt.Sprintf("http://%s", url)
 	}
 	client := influxdb2.NewClient(url, token)
 	return &VoiceMetrics{
 		client: client,
-		org:    DefaultOrg,
+		org:    org,
 		bucket: bucket,
 		url:    url,
 	}
@@ -55,6 +65,21 @@ func (vm *VoiceMetrics) LogVoiceEvent(userID, username, channelID, eventType str
 		},
 		time.Now())
 	log.Printf("Writing point: %s, %s, %t", username, eventType, state)
+
+	return writeAPI.WritePoint(context.Background(), p)
+}
+func (vm *VoiceMetrics) LogOnlineUsers(guildID string, onlineUsers int) error {
+	writeAPI := vm.client.WriteAPIBlocking(vm.org, vm.bucket)
+
+	p := influxdb2.NewPoint(OnlineUsersMeasurement,
+		map[string]string{
+			"guild_id": guildID,
+		},
+		map[string]interface{}{
+			"online_users": onlineUsers,
+		},
+		time.Now())
+	log.Printf("Writing point: %s, %d", guildID, onlineUsers)
 
 	return writeAPI.WritePoint(context.Background(), p)
 }

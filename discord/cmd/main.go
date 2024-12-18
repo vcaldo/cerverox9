@@ -18,6 +18,10 @@ func main() {
 		return
 	}
 
+	dg.Identify.Intents = discordgo.IntentGuilds |
+		discordgo.IntentGuildMembers |
+		discordgo.IntentGuildVoiceStates
+
 	dg.AddHandler(handlers.VoiceStateUpdate)
 
 	err = dg.Open()
@@ -26,6 +30,6 @@ func main() {
 		return
 	}
 
-	log.Println("Bot is now running.")
+	log.Println("Discord Bot is now running.")
 	select {}
 }
