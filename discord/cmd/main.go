@@ -37,7 +37,7 @@ func main() {
 	log.Println("Discord Bot is now running.")
 
 	// Launch a goroutine to update the number of users in voice channels when the bot starts
-	go handlers.UpdateUsersInVoiceChannels(dg)
+	go handlers.RegisterVoiceChannelUsers(dg)
 
 	// Update the number of users in voice channels every 60 seconds
 	ticker := time.NewTicker(60 * time.Second)
@@ -48,7 +48,7 @@ func main() {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				handlers.UpdateUsersInVoiceChannels(dg)
+				handlers.RegisterVoiceChannelUsers(dg)
 			}
 		}
 	}()

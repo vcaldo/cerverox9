@@ -21,7 +21,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		log.Printf("User %s has joined voice channel %s", user.Username, vsu.ChannelID)
 		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "voice", true)
 		// Update the number of users in voice channels when a user joins
-		if err := UpdateUsersInVoiceChannels(s); err != nil {
+		if err := RegisterVoiceChannelUsers(s); err != nil {
 			log.Println("error counting users in voice channels,", err)
 			return
 		}
@@ -35,7 +35,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		log.Printf("User %s has left voice channel %s", user.Username, vsu.BeforeUpdate.ChannelID)
 		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.BeforeUpdate.ChannelID, "voice", false)
 		// Update the number of users in voice channels when a user leaves
-		if err := UpdateUsersInVoiceChannels(s); err != nil {
+		if err := RegisterVoiceChannelUsers(s); err != nil {
 			log.Println("error counting users in voice channels,", err)
 			return
 		}
@@ -112,7 +112,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has deafened themselves in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "deaf", true)
+		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "deafen", true)
 	// User undeafened themselves
 	case vsu.BeforeUpdate.SelfDeaf && !vsu.SelfDeaf:
 		user, err := s.User(vsu.UserID)
@@ -121,11 +121,11 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has undeafened themselves in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "deaf", false)
+		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "deafen", false)
 	}
 }
 
-func UpdateUsersInVoiceChannels(s *discordgo.Session) error {
+func RegisterVoiceChannelUsers(s *discordgo.Session) error {
 	influx := models.NewAuthenticatedVoiceMetricsClient()
 
 	guilds, err := s.UserGuilds(200, "", "", true)
