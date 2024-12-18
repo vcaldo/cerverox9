@@ -85,7 +85,7 @@ func (vm *VoiceMetrics) LogOnlineUsers(guildID string, onlineUsers int) error {
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int, error) {
+func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, error) {
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: -10m)
 		|> filter(fn: (r) => r._measurement == "%s" and r.guild_id == "%s")
@@ -93,18 +93,15 @@ func (vm *VoiceMetrics) GetVoiceChatOnlineUsers(guildID string) (int, error) {
 		vm.bucket, OnlineUsersMeasurement, guildID)
 	log.Println("Running query:", query)
 	queryAPI := vm.client.QueryAPI(vm.org)
-	log.Printf("Query API %v:", queryAPI)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
 		return 0, fmt.Errorf("error querying for online users: %v", err)
 	}
-	log.Printf("Result: %v", result)
 	defer result.Close()
 
 	if result.Next() {
 		record := result.Record()
-		log.Printf("Record: %v", record.Values()["_value"])
-		onlineUsers := record.Value().(int)
+		onlineUsers := record.Value().(int64)
 		return onlineUsers, nil
 	}
 	return 0, fmt.Errorf("no online users found for guild %s", guildID)
