@@ -50,8 +50,8 @@ func newDiscordMetricsClient(url, token, org, bucket string) *DiscordMetrics {
 	}
 }
 
-func (vm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType string, state bool) error {
-	writeAPI := vm.client.WriteAPIBlocking(vm.org, vm.bucket)
+func (dm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType string, state bool) error {
+	writeAPI := dm.client.WriteAPIBlocking(dm.org, dm.bucket)
 
 	p := influxdb2.NewPoint(VoiceEventsMeasurement,
 		map[string]string{
@@ -69,8 +69,8 @@ func (vm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType s
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (vm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
-	writeAPI := vm.client.WriteAPIBlocking(vm.org, vm.bucket)
+func (dm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
+	writeAPI := dm.client.WriteAPIBlocking(dm.org, dm.bucket)
 
 	p := influxdb2.NewPoint(OnlineUsersMeasurement,
 		map[string]string{
@@ -86,7 +86,7 @@ func (vm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userLi
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (vm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string, error) {
+func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string, error) {
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: -10m)
 		|> filter(fn: (r) => r._measurement == "%s" and r.guild_id == "%s")
@@ -95,9 +95,9 @@ func (vm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 		|> limit(n: 1)
 		|> last()`,
 
-		vm.bucket, OnlineUsersMeasurement, guildID)
+		dm.bucket, OnlineUsersMeasurement, guildID)
 	log.Println("Running query:", query)
-	queryAPI := vm.client.QueryAPI(vm.org)
+	queryAPI := dm.client.QueryAPI(dm.org)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
 		return 0, "", fmt.Errorf("error querying for online users: %v", err)

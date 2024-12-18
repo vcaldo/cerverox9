@@ -9,7 +9,7 @@ import (
 )
 
 func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
-	influx := models.NewAuthenticatedDiscordMetricsClient()
+	dm := models.NewAuthenticatedDiscordMetricsClient()
 	switch {
 	// User joined a voice channel
 	case vsu.BeforeUpdate == nil && vsu.ChannelID != "":
@@ -19,7 +19,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has joined voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "voice", true)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "voice", true)
 		// Update the number of users in voice channels when a user joins
 		if err := RegisterVoiceChannelUsers(s); err != nil {
 			log.Println("error counting users in voice channels,", err)
@@ -35,7 +35,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has left voice channel %s", user.Username, vsu.BeforeUpdate.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.BeforeUpdate.ChannelID, "voice", false)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.BeforeUpdate.ChannelID, "voice", false)
 		// Update the number of users in voice channels when a user leaves
 		if err := RegisterVoiceChannelUsers(s); err != nil {
 			log.Println("error counting users in voice channels,", err)
@@ -52,8 +52,8 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has switched from voice channel %s to %s", user.Username, vsu.BeforeUpdate.ChannelID, vsu.ChannelID)
 		// When user swtiches channels, they leave the previous one and join the new one
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.BeforeUpdate.ChannelID, "voice", false)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "voice", true)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.BeforeUpdate.ChannelID, "voice", false)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "voice", true)
 	// User started streaming
 	case !vsu.BeforeUpdate.SelfStream && vsu.SelfStream:
 		user, err := s.User(vsu.UserID)
@@ -62,7 +62,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has started streaming in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "streaming", true)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "streaming", true)
 	// User stopped streaming
 	case vsu.BeforeUpdate.SelfStream && !vsu.SelfStream:
 		user, err := s.User(vsu.UserID)
@@ -71,7 +71,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has stopped streaming in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "streaming", false)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "streaming", false)
 	// User turned their webcam on
 	case !vsu.BeforeUpdate.SelfVideo && vsu.SelfVideo:
 		user, err := s.User(vsu.UserID)
@@ -80,7 +80,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has turned on their webcam in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "webcam", true)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "webcam", true)
 	// User turned their webcam off
 	case vsu.BeforeUpdate.SelfVideo && !vsu.SelfVideo:
 		user, err := s.User(vsu.UserID)
@@ -89,7 +89,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has turned off their webcam in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "webcam", false)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "webcam", false)
 	// User muted themselves
 	case !vsu.BeforeUpdate.SelfMute && vsu.SelfMute:
 		user, err := s.User(vsu.UserID)
@@ -98,7 +98,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has muted themselves in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "mute", true)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "mute", true)
 	// User unmuted themselves
 	case vsu.BeforeUpdate.SelfMute && !vsu.SelfMute:
 		user, err := s.User(vsu.UserID)
@@ -107,7 +107,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has unmuted themselves in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "mute", false)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "mute", false)
 	// User deafened themselves
 	case !vsu.BeforeUpdate.SelfDeaf && vsu.SelfDeaf:
 		user, err := s.User(vsu.UserID)
@@ -116,7 +116,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has deafened themselves in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "deafen", true)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "deafen", true)
 	// User undeafened themselves
 	case vsu.BeforeUpdate.SelfDeaf && !vsu.SelfDeaf:
 		user, err := s.User(vsu.UserID)
@@ -125,12 +125,12 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has undeafened themselves in voice channel %s", user.Username, vsu.ChannelID)
-		influx.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "deafen", false)
+		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "deafen", false)
 	}
 }
 
 func RegisterVoiceChannelUsers(s *discordgo.Session) error {
-	influx := models.NewAuthenticatedDiscordMetricsClient()
+	dm := models.NewAuthenticatedDiscordMetricsClient()
 
 	guilds, err := s.UserGuilds(200, "", "", true)
 	if err != nil {
@@ -159,7 +159,7 @@ func RegisterVoiceChannelUsers(s *discordgo.Session) error {
 			}
 		}
 
-		err = influx.LogOnlineUsers(guildID, totalUsers, onlineUsers)
+		err = dm.LogOnlineUsers(guildID, totalUsers, onlineUsers)
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
 		}
