@@ -1,21 +1,35 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
-	"syscall"
+
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
 func main() {
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
-	// Wait for interrupt signal
-	<-done
+	opts := []bot.Option{
+		bot.WithDefaultHandler(handler),
+	}
 
-	// Create a channel that will never receive data
-	forever := make(chan struct{})
+	token := os.Getenv("TELEGRAM_BOT_TOKEN")
+	b, err := bot.New(token, opts...)
+	if err != nil {
+		panic(err)
+	}
 
-	// Block indefinitely
-	<-forever
+	// Start the bot in a goroutine
+	go func() {
+		b.Start(ctx)
+	}()
+
+}
+
+func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
+
 }
