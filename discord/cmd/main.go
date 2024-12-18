@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -11,7 +12,7 @@ import (
 func main() {
 	token := os.Getenv("DISCORD_BOT_TOKEN")
 
-	dg, err := discordgo.New("Bot " + token)
+	dg, err := discordgo.New(fmt.Sprintf("Bot %s", token))
 	if err != nil {
 		log.Println("error creating Discord session,", err)
 		return
