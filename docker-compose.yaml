@@ -21,5 +21,17 @@ services:
     env_file:
       - secrets.env
     restart: unless-stopped
+  influxdb:
+    image: influxdb:2
+    container_name: influxdb
+    volumes:
+      - influx-data:/var/lib/influxdb2
+      - influx-config:/etc/influxdb2
+    ports:
+      - 8086:8086
+    env_file:
+      - influx-secrets.env
+    restart: unless-stopped
 volumes:
-  redis-data:
+  influx-data:
+  influx-config:
