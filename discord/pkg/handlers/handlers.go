@@ -19,7 +19,12 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 			return
 		}
 		log.Printf("User %s has joined voice channel %s", user.Username, vsu.ChannelID)
-		dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, "voice", true)
+
+		err = dm.LogVoiceEvent(vsu.UserID, user.Username, vsu.ChannelID, models.VoiceEvent, true)
+		if err != nil {
+			log.Println("error logging voice event:", err)
+			return
+		}
 		// Update the number of users in voice channels when a user joins
 		if err := RegisterVoiceChannelUsers(s); err != nil {
 			log.Println("error counting users in voice channels,", err)

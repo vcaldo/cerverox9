@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
 
@@ -22,6 +23,11 @@ const (
 	ChannelNameKey         = "channel_name"
 	EventTypeKey           = "event_type"
 	StateKey               = "state"
+	VoiceEvent             = "voice"
+	MuteEvent              = "mute"
+	DeafenEvent            = "deafen"
+	WebcamEvent            = "webcam"
+	StreamEvent            = "streaming"
 )
 
 type DiscordMetrics struct {
@@ -53,7 +59,27 @@ func newDiscordMetricsClient(url, token, org, bucket string) *DiscordMetrics {
 	}
 }
 
-func (dm *DiscordMetrics) LogVoiceEvent(userID, username, UserDisplayName, guildID, channelID, channelName, eventType string, state bool) error {
+func LogVoiceEvent(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) error {
+	dm := NewAuthenticatedDiscordMetricsClient()
+
+	user, err := s.User(vsu.UserID)
+	if err != nil {
+		return fmt.Errorf("error fetching user: %v", err)
+	}
+
+	channel, err := s.Channel(vsu.ChannelID)
+	if err != nil {
+
+		log.Println("error fetching channel:", err)
+		return fmt.Errorf("error fetching channel: %v", err)
+	}
+
+	log.Printf("User %s has joined voice channel %s", user.Username, channel.Name)
+	dm.logVoiceEvent(vsu.UserID)
+	return nil
+}
+
+func (dm *DiscordMetrics) logVoiceEvent(userID, username, UserDisplayName, guildID, channelID, channelName, eventType string, state bool) error {
 	writeAPI := dm.Client.WriteAPIBlocking(dm.Org, dm.Bucket)
 
 	p := influxdb2.NewPoint(VoiceEventsMeasurement,
