@@ -70,7 +70,7 @@ func (dm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType s
 }
 
 func (dm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
-	writeAPI := dm.client.WriteAPIBlocking(dm.Org, dm.Bucket)
+	writeAPI := dm.Client.WriteAPIBlocking(dm.Org, dm.Bucket)
 
 	p := influxdb2.NewPoint(OnlineUsersMeasurement,
 		map[string]string{
@@ -97,7 +97,7 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 
 		dm.Bucket, OnlineUsersMeasurement, guildID)
 	log.Println("Running query:", query)
-	queryAPI := dm.client.QueryAPI(dm.Org)
+	queryAPI := dm.Client.QueryAPI(dm.Org)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
 		return 0, "", fmt.Errorf("error querying for online users: %v", err)
