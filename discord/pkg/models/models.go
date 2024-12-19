@@ -164,7 +164,6 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 		|> last()`,
 
 		dm.Bucket, OnlineUsersMeasurement, guildID)
-	log.Println("Running query:", query)
 	queryAPI := dm.Client.QueryAPI(dm.Org)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
