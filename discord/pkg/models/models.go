@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
 
@@ -16,16 +17,24 @@ const (
 	OnlineUsersMeasurement = "online_users"
 	UserIdKey              = "user_id"
 	UsernameKey            = "username"
+	UserDisplayName        = "user_display_name"
+	GuildIdKey             = "guild_id"
 	ChannelIdKey           = "channel_id"
+	ChannelNameKey         = "channel_name"
 	EventTypeKey           = "event_type"
 	StateKey               = "state"
+	VoiceEvent             = "voice"
+	MuteEvent              = "mute"
+	DeafenEvent            = "deafen"
+	WebcamEvent            = "webcam"
+	StreamEvent            = "streaming"
 )
 
 type DiscordMetrics struct {
-	client influxdb2.Client
-	org    string
-	bucket string
-	url    string
+	Client influxdb2.Client
+	Org    string
+	Bucket string
+	Url    string
 }
 
 func NewAuthenticatedDiscordMetricsClient() *DiscordMetrics {
@@ -43,22 +52,44 @@ func newDiscordMetricsClient(url, token, org, bucket string) *DiscordMetrics {
 	}
 	client := influxdb2.NewClient(url, token)
 	return &DiscordMetrics{
-		client: client,
-		org:    org,
-		bucket: bucket,
-		url:    url,
+		Client: client,
+		Org:    org,
+		Bucket: bucket,
+		Url:    url,
 	}
 }
 
-func (dm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType string, state bool) error {
-	writeAPI := dm.client.WriteAPIBlocking(dm.org, dm.bucket)
+func (dm *DiscordMetrics) LogVoiceEvent(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate, channelID, voiceEvent string, state bool) error {
+	NewAuthenticatedDiscordMetricsClient()
+
+	user, err := s.User(vsu.UserID)
+	if err != nil {
+		return fmt.Errorf("error fetching user: %v", err)
+	}
+
+	channel, err := s.Channel(channelID)
+	if err != nil {
+
+		log.Println("error fetching channel:", err)
+		return fmt.Errorf("error fetching channel: %v", err)
+	}
+
+	dm.logVoiceEvent(vsu.UserID, user.Username, user.Username, vsu.GuildID, channelID, channel.Name, voiceEvent, state)
+	return nil
+}
+
+func (dm *DiscordMetrics) logVoiceEvent(userID, username, UserDisplayName, guildID, channelID, channelName, eventType string, state bool) error {
+	writeAPI := dm.Client.WriteAPIBlocking(dm.Org, dm.Bucket)
 
 	p := influxdb2.NewPoint(VoiceEventsMeasurement,
 		map[string]string{
-			UserIdKey:    userID,
-			UsernameKey:  username,
-			ChannelIdKey: channelID,
-			EventTypeKey: eventType,
+			UserIdKey:       userID,
+			UsernameKey:     username,
+			UserDisplayName: UserDisplayName,
+			GuildIdKey:      guildID,
+			ChannelIdKey:    channelID,
+			ChannelNameKey:  channelName,
+			EventTypeKey:    eventType,
 		},
 		map[string]interface{}{
 			StateKey: state,
@@ -69,8 +100,45 @@ func (dm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType s
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
+func (dm *DiscordMetrics) LogVoiceChannelUsers(s *discordgo.Session) error {
+	guilds, err := s.UserGuilds(200, "", "", true)
+	if err != nil {
+		return fmt.Errorf("error fetching guilds: %v", err)
+	}
+	for _, guild := range guilds {
+		guildID := guild.ID
+		members, err := s.GuildMembers(guildID, "", 1000)
+		if err != nil {
+			log.Printf("error fetching members for guild %s: %v", guildID, err)
+			continue
+		}
+		totalUsers := 0
+		onlineUsers := []string{}
+		for _, member := range members {
+			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
+			if vs != nil && vs.ChannelID != "" {
+				totalUsers++
+				user, err := s.User(member.User.ID)
+				if err != nil {
+					log.Printf("error fetching user %s: %v", member.User.ID, err)
+					continue
+				}
+
+				onlineUsers = append(onlineUsers, fmt.Sprintf("%s - %s", user.Username, user.GlobalName))
+			}
+		}
+
+		err = dm.LogOnlineUsers(guildID, totalUsers, onlineUsers)
+		if err != nil {
+			return fmt.Errorf("error logging online users: %v", err)
+		}
+		log.Printf("Logged %d users in voice channels for guild %s", totalUsers, guildID)
+	}
+	return nil
+}
+
 func (dm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
-	writeAPI := dm.client.WriteAPIBlocking(dm.org, dm.bucket)
+	writeAPI := dm.Client.WriteAPIBlocking(dm.Org, dm.Bucket)
 
 	p := influxdb2.NewPoint(OnlineUsersMeasurement,
 		map[string]string{
@@ -95,9 +163,8 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 		|> limit(n: 1)
 		|> last()`,
 
-		dm.bucket, OnlineUsersMeasurement, guildID)
-	log.Println("Running query:", query)
-	queryAPI := dm.client.QueryAPI(dm.org)
+		dm.Bucket, OnlineUsersMeasurement, guildID)
+	queryAPI := dm.Client.QueryAPI(dm.Org)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
 		return 0, "", fmt.Errorf("error querying for online users: %v", err)
@@ -112,4 +179,41 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 	}
 
 	return 0, "", fmt.Errorf("no online users found for guild %s", guildID)
+}
+
+func (dm *DiscordMetrics) RegisterVoiceChannelUsers(s *discordgo.Session) error {
+	guilds, err := s.UserGuilds(200, "", "", true)
+	if err != nil {
+		return fmt.Errorf("error fetching guilds: %v", err)
+	}
+	for _, guild := range guilds {
+		guildID := guild.ID
+		members, err := s.GuildMembers(guildID, "", 1000)
+		if err != nil {
+			log.Printf("error fetching members for guild %s: %v", guildID, err)
+			continue
+		}
+		totalUsers := 0
+		onlineUsers := []string{}
+		for _, member := range members {
+			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
+			if vs != nil && vs.ChannelID != "" {
+				totalUsers++
+				user, err := s.User(member.User.ID)
+				if err != nil {
+					log.Printf("error fetching user %s: %v", member.User.ID, err)
+					continue
+				}
+
+				onlineUsers = append(onlineUsers, fmt.Sprintf("%s - %s", user.Username, user.GlobalName))
+			}
+		}
+
+		err = dm.LogOnlineUsers(guildID, totalUsers, onlineUsers)
+		if err != nil {
+			return fmt.Errorf("error logging online users: %v", err)
+		}
+		log.Printf("Logged %d users in voice channels for guild %s", totalUsers, guildID)
+	}
+	return nil
 }
