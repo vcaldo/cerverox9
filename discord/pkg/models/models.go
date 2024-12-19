@@ -75,7 +75,7 @@ func LogVoiceEvent(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) error 
 	}
 
 	log.Printf("User %s has joined voice channel %s", user.Username, channel.Name)
-	dm.logVoiceEvent(vsu.UserID)
+	dm.logVoiceEvent(vsu.UserID, user.Username, user.Username, vsu.GuildID, vsu.ChannelID, channel.Name, VoiceEvent, true)
 	return nil
 }
 
