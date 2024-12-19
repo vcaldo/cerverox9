@@ -5,7 +5,7 @@ go 1.23.4
 require (
 	github.com/go-telegram/bot v1.11.1
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
-	github.com/vcaldo/cerverox9/discord v0.0.0-20241218233821-34dc5c9e8e5e
+	github.com/vcaldo/cerverox9/discord v0.0.0-20241219001516-5fb3fea1e25f
 )
 
 require (
