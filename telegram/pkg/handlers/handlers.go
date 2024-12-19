@@ -56,12 +56,12 @@ func VoiceEventHanlder(ctx context.Context, b *bot.Bot, event *VoiceEvent) {
 	case event.EventType == "webcam" && event.State:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatIdInt,
-			Text:   fmt.Sprintf("User %s abriu a cam na festa online", event.Username),
+			Text:   fmt.Sprintf("User %s abriu a cam na festa online 📸", event.Username),
 		})
 	case event.EventType == "streaming" && event.State:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatIdInt,
-			Text:   fmt.Sprintf("User %s começou a streamar na festa online ", event.Username),
+			Text:   fmt.Sprintf("User %s começou a streamar na festa online 📺", event.Username),
 		})
 	}
 }

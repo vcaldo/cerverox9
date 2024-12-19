@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/vcaldo/cerverox9/discord/pkg/models"
@@ -63,13 +64,19 @@ func (l *VoiceEventListener) NotificationChannel() <-chan VoiceEvent {
 }
 
 func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
+	discordGuildId, ok := os.LookupEnv("DISCORD_GUILD_ID")
+	if !ok {
+		return nil, fmt.Errorf("DISCORD_GUILD_ID env var is required")
+	}
+
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: %s, stop: %s)
-		|> filter(fn: (r) => r._measurement == "voice_events" and (r.event_type == "voice" or r.event_type == "webcam" or r.event_type == "streaming"))
+		|> filter(fn: (r) => r._measurement == "voice_events" and r.guild_id == "%s" and(r.event_type == "voice" or r.event_type == "webcam" or r.event_type == "streaming"))
 		|> sort(columns: ["_time"])`,
 		l.Metrics.Bucket,
 		l.LastChecked.Format(time.RFC3339),
-		time.Now().Format(time.RFC3339))
+		time.Now().Format(time.RFC3339),
+		discordGuildId)
 
 	result, err := l.Metrics.Client.QueryAPI(l.Metrics.Org).Query(context.Background(), query)
 	if err != nil {

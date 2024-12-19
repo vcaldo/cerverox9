@@ -16,7 +16,10 @@ const (
 	OnlineUsersMeasurement = "online_users"
 	UserIdKey              = "user_id"
 	UsernameKey            = "username"
+	UserDisplayName        = "user_display_name"
+	GuildIdKey             = "guild_id"
 	ChannelIdKey           = "channel_id"
+	ChannelNameKey         = "channel_name"
 	EventTypeKey           = "event_type"
 	StateKey               = "state"
 )
@@ -50,15 +53,18 @@ func newDiscordMetricsClient(url, token, org, bucket string) *DiscordMetrics {
 	}
 }
 
-func (dm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType string, state bool) error {
+func (dm *DiscordMetrics) LogVoiceEvent(userID, username, UserDisplayName, guildID, channelID, channelName, eventType string, state bool) error {
 	writeAPI := dm.Client.WriteAPIBlocking(dm.Org, dm.Bucket)
 
 	p := influxdb2.NewPoint(VoiceEventsMeasurement,
 		map[string]string{
-			UserIdKey:    userID,
-			UsernameKey:  username,
-			ChannelIdKey: channelID,
-			EventTypeKey: eventType,
+			UserIdKey:       userID,
+			UsernameKey:     username,
+			UserDisplayName: UserDisplayName,
+			GuildIdKey:      guildID,
+			ChannelIdKey:    channelID,
+			ChannelNameKey:  channelName,
+			EventTypeKey:    eventType,
 		},
 		map[string]interface{}{
 			StateKey: state,
