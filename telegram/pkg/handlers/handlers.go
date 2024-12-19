@@ -25,5 +25,4 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		ChatID: update.Message.Chat.ID,
 		Text:   fmt.Sprintf("%d users estão se divertindo na festa online 🥳\n\nUsers na festa online:\n%s", onlineUsers, usersListLineBreak),
 	})
-	return
 }

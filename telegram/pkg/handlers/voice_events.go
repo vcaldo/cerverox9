@@ -1,4 +1,4 @@
-package voiceevents
+package handlers
 
 import (
 	"context"
@@ -84,13 +84,41 @@ func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
 		record := result.Record()
 		values := record.Values()
 
+		// Debug log
+		log.Printf("Record values: %+v", values)
+
+		// Safe value extraction
+		userID, ok1 := values["user_id"].(string)
+		username, ok2 := values["username"].(string)
+		channelID, ok3 := values["channel_id"].(string)
+		eventType, ok4 := values["event_type"].(string)
+		guildID, ok5 := values["guild_id"].(string)
+
+		// Get state value safely
+		var state bool
+		if stateVal, exists := values["state"]; exists && stateVal != nil {
+			if stateBool, ok := stateVal.(bool); ok {
+				state = stateBool
+			} else {
+				log.Printf("Invalid state type for record: %+v", values)
+				continue
+			}
+		}
+
+		// Skip if required fields are missing
+		if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
+			log.Printf("Skipping record with missing fields: %+v", values)
+			continue
+		}
+
 		event := VoiceEvent{
-			UserID:    values["user_id"].(string),
-			Username:  values["username"].(string),
-			ChannelID: values["channel_id"].(string),
-			EventType: values["event_type"].(string),
-			State:     values["state"].(bool),
+			UserID:    userID,
+			Username:  username,
+			ChannelID: channelID,
+			EventType: eventType,
+			State:     state,
 			Timestamp: record.Time(),
+			GuildID:   guildID,
 		}
 		events = append(events, event)
 	}
