@@ -199,13 +199,7 @@ func (dm *DiscordMetrics) RegisterVoiceChannelUsers(s *discordgo.Session) error 
 			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
 			if vs != nil && vs.ChannelID != "" {
 				totalUsers++
-				user, err := s.User(member.User.ID)
-				if err != nil {
-					log.Printf("error fetching user %s: %v", member.User.ID, err)
-					continue
-				}
-
-				onlineUsers = append(onlineUsers, fmt.Sprintf("%s - %s", user.Username, user.GlobalName))
+				onlineUsers = append(onlineUsers, member.DisplayName())
 			}
 		}
 
