@@ -9,6 +9,8 @@ services:
       - TZ=Etc/UTC
     env_file:
       - secrets.env
+    depends_on:
+      - influxdb
     restart: unless-stopped
   telegram-bot:
     image: telegram-bot:latest
@@ -20,6 +22,8 @@ services:
       - TZ=Etc/UTC
     env_file:
       - secrets.env
+    depends_on:
+      - influxdb
     restart: unless-stopped
   influxdb:
     image: influxdb:2

@@ -17,7 +17,7 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	if err != nil {
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   "Erro ao buscar status da festa online",
+			Text:   "Error fetching voice call status",
 		})
 		return
 	}
@@ -25,7 +25,7 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	usersListLineBreak := strings.Join(userSlice, "\n")
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprintf("%d users estão se divertindo na festa online 🥳\n\nUsers na festa online:\n%s", onlineUsers, usersListLineBreak),
+		Text:   fmt.Sprintf("%d users are having fun in the call \n\n%s\n\n🥳🎊🎈🍾🎂🕺💃🎶🍻🥂", onlineUsers, usersListLineBreak),
 	})
 }
 
@@ -45,23 +45,23 @@ func VoiceEventHanlder(ctx context.Context, b *bot.Bot, event *VoiceEvent) {
 	case event.EventType == "voice" && event.State:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatIdInt,
-			Text:   fmt.Sprintf("User %s entrou na festa online", event.Username),
+			Text:   fmt.Sprintf("%s joined the call", event.Username),
 		})
 	// User left the voice channel
 	case event.EventType == "voice" && !event.State:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatIdInt,
-			Text:   fmt.Sprintf("User %s saiu da festa online", event.Username),
+			Text:   fmt.Sprintf("%s left the call", event.Username),
 		})
 	case event.EventType == "webcam" && event.State:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatIdInt,
-			Text:   fmt.Sprintf("User %s abriu a cam na festa online 📸", event.Username),
+			Text:   fmt.Sprintf("%s opened the webcam 📸", event.Username),
 		})
 	case event.EventType == "streaming" && event.State:
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatIdInt,
-			Text:   fmt.Sprintf("User %s começou a streamar na festa online 📺", event.Username),
+			Text:   fmt.Sprintf("%s started streaming 📺", event.Username),
 		})
 	}
 }

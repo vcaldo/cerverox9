@@ -11,11 +11,13 @@ import (
 )
 
 type VoiceEvent struct {
-	UserID    string `json:"user_id"`
-	Username  string `json:"username"`
-	ChannelID string `json:"channel_id"`
-	EventType string `json:"event_type"`
-	State     bool   `json:"state"`
+	UserID         string `json:"user_id"`
+	Username       string `json:"username"`
+	UserGlobalName string `json:"user_global_name"`
+	ChannelID      string `json:"channel_id"`
+	ChannelName    string `json:"channel_name"`
+	EventType      string `json:"event_type"`
+	State          bool   `json:"state"`
 }
 
 type VoiceEventListener struct {
@@ -94,9 +96,11 @@ func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
 		record := result.Record()
 		values := record.Values()
 
+		log.Printf("Record: %+v", values)
 		// Safe value extraction
 		userID, ok1 := values["user_id"].(string)
 		username, ok2 := values["username"].(string)
+		// globalName, ok6 := values["user_global_name"].(string)
 		channelID, ok3 := values["channel_id"].(string)
 		eventType, ok4 := values["event_type"].(string)
 		state, ok5 := record.Value().(bool)
@@ -108,8 +112,9 @@ func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
 		}
 
 		event := VoiceEvent{
-			UserID:    userID,
-			Username:  username,
+			UserID:   userID,
+			Username: username,
+			// UserGlobalName: usern,
 			ChannelID: channelID,
 			EventType: eventType,
 			State:     state,
