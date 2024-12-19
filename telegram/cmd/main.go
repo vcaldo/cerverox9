@@ -8,6 +8,7 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"github.com/vcaldo/cerverox9/telegram/pkg/handlers"
+	"github.com/vcaldo/cerverox9/telegram/pkg/voiceevents"
 )
 
 func main() {
@@ -27,6 +28,12 @@ func main() {
 	// Start the bot in a goroutine
 	go func() {
 		b.Start(ctx)
+	}()
+
+	// Start the voice event listener
+	listener := voiceevents.NewVoiceEventListener()
+	go func() {
+		listener.Start(ctx)
 	}()
 
 	// Wait for the context to be done

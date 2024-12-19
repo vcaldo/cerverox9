@@ -25,6 +25,14 @@ type VoiceEventListener struct {
 	notifyChan  chan VoiceEvent
 }
 
+func NewVoiceEventListener() *VoiceEventListener {
+	metrics := models.NewAuthenticatedDiscordMetricsClient()
+	return &VoiceEventListener{
+		metrics:    metrics,
+		notifyChan: make(chan VoiceEvent, 100),
+	}
+}
+
 func (l *VoiceEventListener) Start(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
