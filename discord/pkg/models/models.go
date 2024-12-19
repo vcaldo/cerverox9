@@ -22,10 +22,10 @@ const (
 )
 
 type DiscordMetrics struct {
-	client influxdb2.Client
-	org    string
-	bucket string
-	url    string
+	Client influxdb2.Client
+	Org    string
+	Bucket string
+	Url    string
 }
 
 func NewAuthenticatedDiscordMetricsClient() *DiscordMetrics {
@@ -43,15 +43,15 @@ func newDiscordMetricsClient(url, token, org, bucket string) *DiscordMetrics {
 	}
 	client := influxdb2.NewClient(url, token)
 	return &DiscordMetrics{
-		client: client,
-		org:    org,
-		bucket: bucket,
-		url:    url,
+		Client: client,
+		Org:    org,
+		Bucket: bucket,
+		Url:    url,
 	}
 }
 
 func (dm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType string, state bool) error {
-	writeAPI := dm.client.WriteAPIBlocking(dm.org, dm.bucket)
+	writeAPI := dm.Client.WriteAPIBlocking(dm.Org, dm.Bucket)
 
 	p := influxdb2.NewPoint(VoiceEventsMeasurement,
 		map[string]string{
@@ -70,7 +70,7 @@ func (dm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType s
 }
 
 func (dm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
-	writeAPI := dm.client.WriteAPIBlocking(dm.org, dm.bucket)
+	writeAPI := dm.client.WriteAPIBlocking(dm.Org, dm.Bucket)
 
 	p := influxdb2.NewPoint(OnlineUsersMeasurement,
 		map[string]string{
@@ -95,9 +95,9 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 		|> limit(n: 1)
 		|> last()`,
 
-		dm.bucket, OnlineUsersMeasurement, guildID)
+		dm.Bucket, OnlineUsersMeasurement, guildID)
 	log.Println("Running query:", query)
-	queryAPI := dm.client.QueryAPI(dm.org)
+	queryAPI := dm.client.QueryAPI(dm.Org)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
 		return 0, "", fmt.Errorf("error querying for online users: %v", err)
