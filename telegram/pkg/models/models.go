@@ -28,20 +28,6 @@ type DiscordMetrics struct {
 	url    string
 }
 
-// type VoiceEventListener struct {
-// 	metrics     *DiscordMetrics
-// 	lastChecked time.Time
-// 	notifyChan  chan VoiceEvent
-// }
-
-type VoiceEvent struct {
-	UserID    string
-	Username  string
-	ChannelID string
-	State     bool
-	Time      time.Time
-}
-
 func NewAuthenticatedDiscordMetricsClient() *DiscordMetrics {
 	return newDiscordMetricsClient(
 		os.Getenv("INFLUX_URL"),
@@ -83,12 +69,13 @@ func (dm *DiscordMetrics) LogVoiceEvent(userID, username, channelID, eventType s
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (dm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int) error {
+func (dm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
 	writeAPI := dm.client.WriteAPIBlocking(dm.org, dm.bucket)
 
 	p := influxdb2.NewPoint(OnlineUsersMeasurement,
 		map[string]string{
-			"guild_id": guildID,
+			"guild_id":  guildID,
+			"user_list": strings.Join(userList, ","),
 		},
 		map[string]interface{}{
 			"online_users": onlineUsers,
