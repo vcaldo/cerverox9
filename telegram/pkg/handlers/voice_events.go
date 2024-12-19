@@ -65,7 +65,7 @@ func (l *VoiceEventListener) NotificationChannel() <-chan VoiceEvent {
 func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: %s, stop: %s)
-		|> filter(fn: (r) => r._measurement == "voice_events" and r.event_type == "voice")
+		|> filter(fn: (r) => r._measurement == "voice_events" and (r.event_type == "voice" or r.event_type == "webcam" or r.event_type == "streaming"))
 		|> sort(columns: ["_time"])`,
 		l.Metrics.Bucket,
 		l.LastChecked.Format(time.RFC3339),
@@ -81,9 +81,6 @@ func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
 	for result.Next() {
 		record := result.Record()
 		values := record.Values()
-
-		// Debug log
-		log.Printf("Record values: %+v", values)
 
 		// Safe value extraction
 		userID, ok1 := values["user_id"].(string)
