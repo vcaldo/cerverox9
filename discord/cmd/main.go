@@ -9,6 +9,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/vcaldo/cerverox9/discord/pkg/handlers"
+	"github.com/vcaldo/cerverox9/discord/pkg/models"
 )
 
 func main() {
@@ -37,7 +38,8 @@ func main() {
 	log.Println("Discord Bot is now running.")
 
 	// Launch a goroutine to update the number of users in voice channels when the bot starts
-	go handlers.RegisterVoiceChannelUsers(dg)
+	dm := models.NewAuthenticatedDiscordMetricsClient()
+	go dm.RegisterVoiceChannelUsers(dg)
 
 	// Update the number of users in voice channels every 60 seconds
 	ticker := time.NewTicker(300 * time.Second)
@@ -48,7 +50,7 @@ func main() {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				handlers.RegisterVoiceChannelUsers(dg)
+				dm.RegisterVoiceChannelUsers(dg)
 			}
 		}
 	}()
