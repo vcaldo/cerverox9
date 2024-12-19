@@ -69,6 +69,11 @@ func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
 		return nil, fmt.Errorf("DISCORD_GUILD_ID env var is required")
 	}
 
+	// On first run lastCheched is empty, set it to now() to avoid processing old events
+	if l.LastChecked.IsZero() {
+		l.LastChecked = time.Now()
+	}
+
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: %s, stop: %s)
 		|> filter(fn: (r) => r._measurement == "voice_events" and r.guild_id == "%s" and(r.event_type == "voice" or r.event_type == "webcam" or r.event_type == "streaming"))
