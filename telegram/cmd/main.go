@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -33,6 +35,26 @@ func main() {
 	listener := handlers.NewVoiceEventListener()
 	go func() {
 		listener.Start(ctx)
+	}()
+
+	chatId, ok := os.LookupEnv("TELEGRAM_CHAT_ID")
+	if !ok {
+		panic("TELEGRAM_CHAT_IDenv var is required")
+	}
+
+	chatIdInt, err := strconv.ParseInt(chatId, 10, 64)
+	if err != nil {
+		panic("TELEGRAM_CHAT_ID must be a valid int64")
+	}
+
+	// Listen for events from the voice channel and send messages
+	go func() {
+		for event := range listener.NotifyChan {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: chatIdInt,
+				Text:   fmt.Sprintf("User %s joined the voice channel", event.Username),
+			})
+		}
 	}()
 
 	// Wait for the context to be done

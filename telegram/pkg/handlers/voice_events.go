@@ -10,26 +10,24 @@ import (
 )
 
 type VoiceEvent struct {
-	UserID    string    `json:"user_id"`
-	Username  string    `json:"username"`
-	ChannelID string    `json:"channel_id"`
-	EventType string    `json:"event_type"`
-	State     bool      `json:"state"`
-	Timestamp time.Time `json:"timestamp"`
-	GuildID   string    `json:"guild_id"`
+	UserID    string `json:"user_id"`
+	Username  string `json:"username"`
+	ChannelID string `json:"channel_id"`
+	EventType string `json:"event_type"`
+	State     bool   `json:"state"`
 }
 
 type VoiceEventListener struct {
-	metrics     *models.DiscordMetrics
-	lastChecked time.Time
-	notifyChan  chan VoiceEvent
+	Metrics     *models.DiscordMetrics
+	LastChecked time.Time
+	NotifyChan  chan VoiceEvent
 }
 
 func NewVoiceEventListener() *VoiceEventListener {
 	metrics := models.NewAuthenticatedDiscordMetricsClient()
 	return &VoiceEventListener{
-		metrics:    metrics,
-		notifyChan: make(chan VoiceEvent, 100),
+		Metrics:    metrics,
+		NotifyChan: make(chan VoiceEvent, 200),
 	}
 }
 
@@ -40,7 +38,7 @@ func (l *VoiceEventListener) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			close(l.notifyChan)
+			close(l.NotifyChan)
 			return
 		case <-ticker.C:
 			events, err := l.checkNewEvents()
@@ -50,30 +48,30 @@ func (l *VoiceEventListener) Start(ctx context.Context) {
 			}
 			for _, event := range events {
 				select {
-				case l.notifyChan <- event:
+				case l.NotifyChan <- event:
 				default:
 					log.Println("Channel buffer full, skipping event")
 				}
 			}
-			l.lastChecked = time.Now()
+			l.LastChecked = time.Now()
 		}
 	}
 }
 
 func (l *VoiceEventListener) NotificationChannel() <-chan VoiceEvent {
-	return l.notifyChan
+	return l.NotifyChan
 }
 
 func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
-	query := fmt.Sprintf(`
-        from(bucket:"%s")
-            |> range(start: %s)
-            |> filter(fn: (r) => r._measurement == "voice_events")
-            |> sort(columns: ["_time"])`,
-		l.metrics.Bucket,
-		l.lastChecked.Format(time.RFC3339))
+	query := fmt.Sprintf(`from(bucket:"%s")
+		|> range(start: %s, stop: %s)
+		|> filter(fn: (r) => r._measurement == "voice_events" and r.event_type == "voice")
+		|> sort(columns: ["_time"])`,
+		l.Metrics.Bucket,
+		l.LastChecked.Format(time.RFC3339),
+		time.Now().Format(time.RFC3339))
 
-	result, err := l.metrics.Client.QueryAPI(l.metrics.Org).Query(context.Background(), query)
+	result, err := l.Metrics.Client.QueryAPI(l.Metrics.Org).Query(context.Background(), query)
 	if err != nil {
 		return nil, fmt.Errorf("query error: %w", err)
 	}
@@ -92,18 +90,7 @@ func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
 		username, ok2 := values["username"].(string)
 		channelID, ok3 := values["channel_id"].(string)
 		eventType, ok4 := values["event_type"].(string)
-		guildID, ok5 := values["guild_id"].(string)
-
-		// Get state value safely
-		var state bool
-		if stateVal, exists := values["state"]; exists && stateVal != nil {
-			if stateBool, ok := stateVal.(bool); ok {
-				state = stateBool
-			} else {
-				log.Printf("Invalid state type for record: %+v", values)
-				continue
-			}
-		}
+		state, ok5 := record.Value().(bool)
 
 		// Skip if required fields are missing
 		if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
@@ -117,10 +104,9 @@ func (l *VoiceEventListener) checkNewEvents() ([]VoiceEvent, error) {
 			ChannelID: channelID,
 			EventType: eventType,
 			State:     state,
-			Timestamp: record.Time(),
-			GuildID:   guildID,
 		}
 		events = append(events, event)
+		log.Printf("Event: %+v", event)
 	}
 
 	if err := result.Err(); err != nil {
