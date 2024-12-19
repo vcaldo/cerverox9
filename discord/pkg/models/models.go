@@ -59,7 +59,7 @@ func newDiscordMetricsClient(url, token, org, bucket string) *DiscordMetrics {
 	}
 }
 
-func (dm *DiscordMetrics) LogVoiceEvent(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate, voiceEvent string, state bool) error {
+func (dm *DiscordMetrics) LogVoiceEvent(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate, channelID, voiceEvent string, state bool) error {
 	NewAuthenticatedDiscordMetricsClient()
 
 	user, err := s.User(vsu.UserID)
@@ -67,15 +67,14 @@ func (dm *DiscordMetrics) LogVoiceEvent(s *discordgo.Session, vsu *discordgo.Voi
 		return fmt.Errorf("error fetching user: %v", err)
 	}
 
-	channel, err := s.Channel(vsu.ChannelID)
+	channel, err := s.Channel(channelID)
 	if err != nil {
 
 		log.Println("error fetching channel:", err)
 		return fmt.Errorf("error fetching channel: %v", err)
 	}
 
-	log.Printf("User %s has joined voice channel %s", user.Username, channel.Name)
-	dm.logVoiceEvent(vsu.UserID, user.Username, user.Username, vsu.GuildID, vsu.ChannelID, channel.Name, voiceEvent, state)
+	dm.logVoiceEvent(vsu.UserID, user.Username, user.Username, vsu.GuildID, channelID, channel.Name, voiceEvent, state)
 	return nil
 }
 

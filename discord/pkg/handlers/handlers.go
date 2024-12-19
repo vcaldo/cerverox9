@@ -19,7 +19,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has joined voice channel %s", user.Username, vsu.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.VoiceEvent, true)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.VoiceEvent, true)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
@@ -39,7 +39,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has left voice channel %s", user.Username, vsu.BeforeUpdate.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.VoiceEvent, false)
+		err = dm.LogVoiceEvent(s, vsu, vsu.BeforeUpdate.ChannelID, models.VoiceEvent, false)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
@@ -50,7 +50,6 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		if err != nil {
 			log.Println("error register users in voice channels:", err)
 		}
-
 	// User switched voice channels
 	case vsu.ChannelID != "" && vsu.BeforeUpdate.ChannelID != vsu.ChannelID:
 		user, err := s.User(vsu.UserID)
@@ -61,13 +60,13 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		log.Printf("User %s has switched from voice channel %s to %s", user.Username, vsu.BeforeUpdate.ChannelID, vsu.ChannelID)
 
 		// When user swtiches channels, they leave the previous one and join the new one
-		err = dm.LogVoiceEvent(s, vsu, models.VoiceEvent, false)
+		err = dm.LogVoiceEvent(s, vsu, vsu.BeforeUpdate.ChannelID, models.VoiceEvent, false)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
 		}
 
-		err = dm.LogVoiceEvent(s, vsu, models.VoiceEvent, true)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.VoiceEvent, true)
 		if err != nil {
 			log.Println("error register users in voice channels:", err)
 		}
@@ -86,7 +85,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has started streaming in voice channel %s", user.Username, vsu.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.StreamEvent, true)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.StreamEvent, true)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
@@ -100,7 +99,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has stopped streaming in voice channel %s", user.Username, vsu.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.StreamEvent, false)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.StreamEvent, false)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
@@ -114,7 +113,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has turned on their webcam in voice channel %s", user.Username, vsu.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.WebcamEvent, true)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.WebcamEvent, true)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
@@ -128,7 +127,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has turned off their webcam in voice channel %s", user.Username, vsu.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.WebcamEvent, false)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.WebcamEvent, false)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
@@ -142,7 +141,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has muted themselves in voice channel %s", user.Username, vsu.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.MuteEvent, true)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.MuteEvent, true)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
@@ -156,7 +155,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has unmuted themselves in voice channel %s", user.Username, vsu.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.MuteEvent, false)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.MuteEvent, false)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
@@ -170,7 +169,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has deafened themselves in voice channel %s", user.Username, vsu.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.DeafenEvent, true)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.DeafenEvent, true)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
@@ -184,7 +183,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 		log.Printf("User %s has undeafened themselves in voice channel %s", user.Username, vsu.ChannelID)
 
-		err = dm.LogVoiceEvent(s, vsu, models.DeafenEvent, false)
+		err = dm.LogVoiceEvent(s, vsu, vsu.ChannelID, models.DeafenEvent, false)
 		if err != nil {
 			log.Println("error logging voice event:", err)
 			return
