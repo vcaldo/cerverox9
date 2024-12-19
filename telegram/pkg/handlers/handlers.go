@@ -25,7 +25,7 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	usersListLineBreak := strings.Join(userSlice, "\n")
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprintf("%d users are having fun in the call \n\n🥳🎊🎈🍾🎂🕺💃🎶🍻🥂\n\n%s", onlineUsers, usersListLineBreak),
+		Text:   fmt.Sprintf("%d users are having fun in the call \n\n%s\n\n🥳🎊🎈🍾🎂🕺💃🎶🍻🥂", onlineUsers, usersListLineBreak),
 	})
 }
 
