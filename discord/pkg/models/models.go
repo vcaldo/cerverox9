@@ -100,52 +100,54 @@ func (dm *DiscordMetrics) logVoiceEvent(userID, username, UserDisplayName, guild
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (dm *DiscordMetrics) LogVoiceChannelUsers(s *discordgo.Session) error {
-	guilds, err := s.UserGuilds(200, "", "", true)
-	if err != nil {
-		return fmt.Errorf("error fetching guilds: %v", err)
-	}
-	for _, guild := range guilds {
-		guildID := guild.ID
-		members, err := s.GuildMembers(guildID, "", 1000)
-		if err != nil {
-			log.Printf("error fetching members for guild %s: %v", guildID, err)
-			continue
-		}
-		totalUsers := 0
-		onlineUsers := []string{}
-		for _, member := range members {
-			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
-			if vs != nil && vs.ChannelID != "" {
-				totalUsers++
-				user, err := s.User(member.User.ID)
-				if err != nil {
-					log.Printf("error fetching user %s: %v", member.User.ID, err)
-					continue
-				}
+// func (dm *DiscordMetrics) LogVoiceChannelUsers(s *discordgo.Session) error {
+// 	guilds, err := s.UserGuilds(200, "", "", true)
+// 	if err != nil {
+// 		return fmt.Errorf("error fetching guilds: %v", err)
+// 	}
+// 	for _, guild := range guilds {
+// 		guildID := guild.ID
+// 		members, err := s.GuildMembers(guildID, "", 1000)
+// 		if err != nil {
+// 			log.Printf("error fetching members for guild %s: %v", guildID, err)
+// 			continue
+// 		}
+// 		totalOncallUsers := 0
+// 		onlineUsers := []string{}
+// 		for _, member := range members {
+// 			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
+// 			if vs != nil && vs.ChannelID != "" {
+// 				totalOncallUsers++
+// 				user, err := s.User(member.User.ID)
+// 				if err != nil {
+// 					log.Printf("error fetching user %s: %v", member.User.ID, err)
+// 					continue
+// 				}
 
-				onlineUsers = append(onlineUsers, fmt.Sprintf("%s - %s", user.Username, user.GlobalName))
-			}
-		}
+// 				onlineUsers = append(onlineUsers, fmt.Sprintf("%s - %s", user.Username, user.GlobalName))
+// 			}
+// 		}
 
-		err = dm.LogOnlineUsers(guildID, totalUsers, onlineUsers)
-		if err != nil {
-			return fmt.Errorf("error logging online users: %v", err)
-		}
-		log.Printf("Logged %d users in voice channels for guild %s", totalUsers, guildID)
-	}
-	return nil
-}
+// 		err = dm.LogOnlineUsers(guildID, totalOncallUsers, onlineUsers)
+// 		if err != nil {
+// 			return fmt.Errorf("error logging online users: %v", err)
+// 		}
+// 		log.Printf("Logged %d users in voice channels for guild %s", totalOncallUsers, guildID)
+// 	}
+// 	return nil
+// }
 
-func (dm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
+func (dm *DiscordMetrics) LogOnlineUsers(guildID string, oncallUsers, onlineUsers int, oncallUserList, onlineUserList []string) error {
 	writeAPI := dm.Client.WriteAPIBlocking(dm.Org, dm.Bucket)
 
 	p := influxdb2.NewPoint(OnlineUsersMeasurement,
 		map[string]string{
-			"guild_id":  guildID,
-			"user_list": strings.Join(userList, ","),
+			"guild_id":    guildID,
+			"oncall_list": strings.Join(oncallUserList, ","),
+			"online_list": strings.Join(onlineUserList, ","),
 		},
 		map[string]interface{}{
+			"oncall_users": oncallUsers,
 			"online_users": onlineUsers,
 		},
 		time.Now())
@@ -193,21 +195,28 @@ func (dm *DiscordMetrics) RegisterVoiceChannelUsers(s *discordgo.Session) error 
 			log.Printf("error fetching members for guild %s: %v", guildID, err)
 			continue
 		}
-		totalUsers := 0
+		totalOncallUsers := 0
+		totalOnlineUsers := 0
+		oncallUsers := []string{}
 		onlineUsers := []string{}
 		for _, member := range members {
-			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
-			if vs != nil && vs.ChannelID != "" {
-				totalUsers++
+			vs, err := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
+			if err != nil {
+				totalOnlineUsers++
 				onlineUsers = append(onlineUsers, member.DisplayName())
+				if vs != nil && vs.ChannelID != "" {
+					totalOncallUsers++
+					oncallUsers = append(oncallUsers, member.DisplayName())
+				}
 			}
-		}
 
-		err = dm.LogOnlineUsers(guildID, totalUsers, onlineUsers)
-		if err != nil {
-			return fmt.Errorf("error logging online users: %v", err)
+			err = dm.LogOnlineUsers(guildID, totalOncallUsers, totalOnlineUsers, oncallUsers, onlineUsers)
+			if err != nil {
+				return fmt.Errorf("error logging online users: %v", err)
+			}
+			log.Printf("Logged %d users in voice channels and %d online usersfor guild %s", totalOncallUsers, totalOnlineUsers, guildID)
 		}
-		log.Printf("Logged %d users in voice channels for guild %s", totalUsers, guildID)
+		return nil
 	}
 	return nil
 }
