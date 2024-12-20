@@ -32,8 +32,6 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		log.Fatal("DISCORD_INVITE_LINK env var is required")
 	}
 
-	// b.
-
 	message := fmt.Sprintf(
 		"We have %d users having fun in the call.\n\n"+
 			"%s\n\n"+
