@@ -14,6 +14,7 @@ import (
 
 const (
 	VoiceEventsMeasurement = "voice_events"
+	OncallUsersMeasurement = "oncall_users"
 	OnlineUsersMeasurement = "online_users"
 	UserIdKey              = "user_id"
 	UsernameKey            = "username"
@@ -109,7 +110,7 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 		|> limit(n: 1)
 		|> last()`,
 
-		dm.Bucket, OnlineUsersMeasurement, guildID)
+		dm.Bucket, OncallUsersMeasurement, guildID)
 	queryAPI := dm.Client.QueryAPI(dm.Org)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
@@ -139,7 +140,7 @@ func (dm *DiscordMetrics) logUsersCount(measurementName, guildID string, userCou
 			"user_count": userCount,
 		},
 		time.Now())
-	log.Printf("Writing point: %s, %d in %s measurement", guildID, userCount, OnlineUsersMeasurement)
+	log.Printf("Writing point: %s, %d in %s measurement", guildID, userCount, OncallUsersMeasurement)
 
 	return writeAPI.WritePoint(context.Background(), p)
 }
@@ -166,11 +167,42 @@ func (dm *DiscordMetrics) LogOncallUsers(s *discordgo.Session) error {
 			}
 		}
 
-		err = dm.logUsersCount(OnlineUsersMeasurement, guildID, oncallUsersCount, oncallUsers)
+		err = dm.logUsersCount(OncallUsersMeasurement, guildID, oncallUsersCount, oncallUsers)
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
 		}
 		log.Printf("Logged %d users in voice channels for guild %s", oncallUsersCount, guildID)
+	}
+	return nil
+}
+
+func (dm *DiscordMetrics) LogOnlineUsers(s *discordgo.Session) error {
+	guilds, err := s.UserGuilds(200, "", "", true)
+	if err != nil {
+		return fmt.Errorf("error fetching guilds: %v", err)
+	}
+	for _, guild := range guilds {
+		guildID := guild.ID
+		members, err := s.GuildMembers(guildID, "", 1000)
+		if err != nil {
+			log.Printf("error fetching members for guild %s: %v", guildID, err)
+			continue
+		}
+		onlineUsersCount := 0
+		onlineUsers := []string{}
+		for _, member := range members {
+			presence, err := s.State.Presence(guildID, member.User.ID)
+			if err == nil && presence.Status != discordgo.StatusOffline {
+				onlineUsersCount++
+				onlineUsers = append(onlineUsers, member.DisplayName())
+			}
+		}
+
+		err = dm.logUsersCount(OnlineUsersMeasurement, guildID, onlineUsersCount, onlineUsers)
+		if err != nil {
+			return fmt.Errorf("error logging online users: %v", err)
+		}
+		log.Printf("Logged %d online users for guild %s", onlineUsersCount, guildID)
 	}
 	return nil
 }
