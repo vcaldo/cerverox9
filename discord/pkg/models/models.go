@@ -145,7 +145,7 @@ func (dm *DiscordMetrics) logUsersCount(measurementName, guildID string, userCou
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (dm *DiscordMetrics) LogOncallUsers(s *discordgo.Session) error {
+func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 	guilds, err := s.UserGuilds(200, "", "", true)
 	if err != nil {
 		return fmt.Errorf("error fetching guilds: %v", err)
@@ -179,9 +179,9 @@ func (dm *DiscordMetrics) LogOncallUsers(s *discordgo.Session) error {
 		onlineUsers := []string{}
 		for _, member := range members {
 			presence, err := s.State.Presence(guildID, member.User.ID)
+			log.Printf("User %s is online", member.DisplayName())
+			log.Printf("Presence: %+v", presence)
 			if err == nil && presence.Status != discordgo.StatusOffline {
-				log.Printf("User %s is online", member.DisplayName())
-				log.Printf("Presence: %+v", presence)
 				onlineUsersCount++
 				onlineUsers = append(onlineUsers, member.DisplayName())
 			}

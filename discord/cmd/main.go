@@ -39,7 +39,7 @@ func main() {
 
 	// Launch a goroutine to update the number of users in voice channels when the bot starts
 	dm := models.NewAuthenticatedDiscordMetricsClient()
-	go dm.LogOncallUsers(dg)
+	go dm.LogUsersPresence(dg)
 
 	// Update the number of users in voice channels every 60 seconds
 	ticker := time.NewTicker(300 * time.Second)
@@ -50,7 +50,7 @@ func main() {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				dm.LogOncallUsers(dg)
+				dm.LogUsersPresence(dg)
 			}
 		}
 	}()
