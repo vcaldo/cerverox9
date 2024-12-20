@@ -26,7 +26,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 
 		// Update the number of users in voice channels when a user joins
-		err = dm.RegisterVoiceChannelUsers(s)
+		err = dm.LogUsersPresence(s)
 		if err != nil {
 			log.Println("error register users in voice channels:", err)
 		}
@@ -46,7 +46,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 
 		// Update the number of users in voice channels when a user joins
-		err = dm.RegisterVoiceChannelUsers(s)
+		err = dm.LogUsersPresence(s)
 		if err != nil {
 			log.Println("error register users in voice channels:", err)
 		}
@@ -72,7 +72,7 @@ func VoiceStateUpdate(s *discordgo.Session, vsu *discordgo.VoiceStateUpdate) {
 		}
 
 		// Update the number of users swtich channels
-		err = dm.RegisterVoiceChannelUsers(s)
+		err = dm.LogUsersPresence(s)
 		if err != nil {
 			log.Println("error register users in voice channels:", err)
 		}

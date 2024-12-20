@@ -24,6 +24,7 @@ func main() {
 
 	// Register necessary Intents for the bot
 	dg.Identify.Intents = discordgo.IntentGuilds |
+		discordgo.IntentsGuildPresences |
 		discordgo.IntentGuildMembers |
 		discordgo.IntentGuildVoiceStates
 
@@ -39,7 +40,7 @@ func main() {
 
 	// Launch a goroutine to update the number of users in voice channels when the bot starts
 	dm := models.NewAuthenticatedDiscordMetricsClient()
-	go dm.RegisterVoiceChannelUsers(dg)
+	go dm.LogUsersPresence(dg)
 
 	// Update the number of users in voice channels every 60 seconds
 	ticker := time.NewTicker(300 * time.Second)
@@ -50,7 +51,7 @@ func main() {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				dm.RegisterVoiceChannelUsers(dg)
+				dm.LogUsersPresence(dg)
 			}
 		}
 	}()

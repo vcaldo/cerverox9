@@ -14,6 +14,7 @@ import (
 
 const (
 	VoiceEventsMeasurement = "voice_events"
+	OncallUsersMeasurement = "oncall_users"
 	OnlineUsersMeasurement = "online_users"
 	UserIdKey              = "user_id"
 	UsernameKey            = "username"
@@ -100,60 +101,6 @@ func (dm *DiscordMetrics) logVoiceEvent(userID, username, UserDisplayName, guild
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (dm *DiscordMetrics) LogVoiceChannelUsers(s *discordgo.Session) error {
-	guilds, err := s.UserGuilds(200, "", "", true)
-	if err != nil {
-		return fmt.Errorf("error fetching guilds: %v", err)
-	}
-	for _, guild := range guilds {
-		guildID := guild.ID
-		members, err := s.GuildMembers(guildID, "", 1000)
-		if err != nil {
-			log.Printf("error fetching members for guild %s: %v", guildID, err)
-			continue
-		}
-		totalUsers := 0
-		onlineUsers := []string{}
-		for _, member := range members {
-			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
-			if vs != nil && vs.ChannelID != "" {
-				totalUsers++
-				user, err := s.User(member.User.ID)
-				if err != nil {
-					log.Printf("error fetching user %s: %v", member.User.ID, err)
-					continue
-				}
-
-				onlineUsers = append(onlineUsers, fmt.Sprintf("%s - %s", user.Username, user.GlobalName))
-			}
-		}
-
-		err = dm.LogOnlineUsers(guildID, totalUsers, onlineUsers)
-		if err != nil {
-			return fmt.Errorf("error logging online users: %v", err)
-		}
-		log.Printf("Logged %d users in voice channels for guild %s", totalUsers, guildID)
-	}
-	return nil
-}
-
-func (dm *DiscordMetrics) LogOnlineUsers(guildID string, onlineUsers int, userList []string) error {
-	writeAPI := dm.Client.WriteAPIBlocking(dm.Org, dm.Bucket)
-
-	p := influxdb2.NewPoint(OnlineUsersMeasurement,
-		map[string]string{
-			"guild_id":  guildID,
-			"user_list": strings.Join(userList, ","),
-		},
-		map[string]interface{}{
-			"online_users": onlineUsers,
-		},
-		time.Now())
-	log.Printf("Writing point: %s, %d in %s measurement", guildID, onlineUsers, OnlineUsersMeasurement)
-
-	return writeAPI.WritePoint(context.Background(), p)
-}
-
 func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string, error) {
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: -10m)
@@ -163,7 +110,7 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 		|> limit(n: 1)
 		|> last()`,
 
-		dm.Bucket, OnlineUsersMeasurement, guildID)
+		dm.Bucket, OncallUsersMeasurement, guildID)
 	queryAPI := dm.Client.QueryAPI(dm.Org)
 	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
@@ -181,33 +128,74 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 	return 0, "", fmt.Errorf("no online users found for guild %s", guildID)
 }
 
-func (dm *DiscordMetrics) RegisterVoiceChannelUsers(s *discordgo.Session) error {
+func (dm *DiscordMetrics) logUsersCount(measurementName, guildID string, userCount int, userList []string) error {
+	writeAPI := dm.Client.WriteAPIBlocking(dm.Org, dm.Bucket)
+
+	p := influxdb2.NewPoint(measurementName,
+		map[string]string{
+			"guild_id":  guildID,
+			"user_list": strings.Join(userList, ","),
+		},
+		map[string]interface{}{
+			"user_count": userCount,
+		},
+		time.Now())
+	log.Printf("Writing point: %s, %d in %s measurement", guildID, userCount, measurementName)
+
+	return writeAPI.WritePoint(context.Background(), p)
+}
+
+func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 	guilds, err := s.UserGuilds(200, "", "", true)
 	if err != nil {
 		return fmt.Errorf("error fetching guilds: %v", err)
 	}
 	for _, guild := range guilds {
+		// Register oncall users
 		guildID := guild.ID
 		members, err := s.GuildMembers(guildID, "", 1000)
 		if err != nil {
 			log.Printf("error fetching members for guild %s: %v", guildID, err)
 			continue
 		}
-		totalUsers := 0
-		onlineUsers := []string{}
+		oncallUsersCount := 0
+		oncallUsers := []string{}
 		for _, member := range members {
+			if member.User.Bot {
+				continue
+			}
 			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
 			if vs != nil && vs.ChannelID != "" {
-				totalUsers++
+				oncallUsersCount++
+				oncallUsers = append(oncallUsers, member.DisplayName())
+			}
+		}
+
+		err = dm.logUsersCount(OncallUsersMeasurement, guildID, oncallUsersCount, oncallUsers)
+		if err != nil {
+			return fmt.Errorf("error logging online users: %v", err)
+		}
+		log.Printf("Logged %d on call users for guild %s - %s", oncallUsersCount, guildID, guild.Name)
+
+		// Register online users
+		onlineUsersCount := 0
+		onlineUsers := []string{}
+		for _, member := range members {
+			if member.User.Bot {
+				continue
+			}
+			presence, _ := s.State.Presence(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
+			if presence != nil && presence.Status != discordgo.StatusOffline {
+				onlineUsersCount++
 				onlineUsers = append(onlineUsers, member.DisplayName())
 			}
 		}
 
-		err = dm.LogOnlineUsers(guildID, totalUsers, onlineUsers)
+		err = dm.logUsersCount(OnlineUsersMeasurement, guildID, onlineUsersCount, onlineUsers)
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
 		}
-		log.Printf("Logged %d users in voice channels for guild %s", totalUsers, guildID)
+		log.Printf("Logged %d online users for guild %s - %s", onlineUsersCount, guildID, guild.Name)
 	}
 	return nil
 }
