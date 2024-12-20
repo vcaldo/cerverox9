@@ -179,9 +179,14 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 		onlineUsers := []string{}
 		for _, member := range members {
 			presence, err := s.State.Presence(guildID, member.User.ID)
+			if err != nil {
+				log.Printf("error fetching presence for member %s: %v", member.User.ID, err)
+				continue
+			}
 			log.Printf("Member: %+v, %+v", member.User.Username, member.DisplayName())
-			log.Printf("Presence: %+v", presence.Status)
-			if err == nil && presence.Status != discordgo.StatusOffline {
+
+			if presence != nil && presence.Status != discordgo.StatusOffline {
+				log.Printf("Presence: %+v", presence.Status)
 				onlineUsersCount++
 				onlineUsers = append(onlineUsers, member.DisplayName())
 			}
