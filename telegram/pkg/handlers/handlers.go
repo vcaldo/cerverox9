@@ -21,11 +21,25 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		})
 		return
 	}
-	userSlice := strings.Split(usersList, ",")
-	usersListLineBreak := strings.Join(userSlice, "\n")
+	oncallUsersList := strings.Split(oncallUsers, ",")
+	oncallUsersListLinebreak := strings.Join(oncallUsersList, "\n")
+	onlineUsersList := strings.Split(onlineUsers, ",")
+	onlineUsersListLinebreak := strings.Join(onlineUsersList, "\n")
+
+	message := fmt.Sprintf(
+		"We have %d users having fun in the call.\n\n"+
+			"%s\n\n"+
+			"There are %d users who are one click away from having fun.\n\n"+
+			"%s",
+		oncallUsersCount,
+		oncallUsersListLinebreak,
+		onlineUsersCount,
+		onlineUsersListLinebreak,
+	)
+
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprintf("%d users are having fun in the call \n\n%s\n\n🥳🎊🎈🍾🎂🕺💃🎶🍻🥂", onlineUsers, usersListLineBreak),
+		Text:   message,
 	})
 }
 
