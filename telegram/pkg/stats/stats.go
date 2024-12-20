@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"log"
 	"os"
 
 	"github.com/vcaldo/cerverox9/discord/pkg/models"
@@ -8,7 +9,10 @@ import (
 
 func GetVoiceCallStatus() (oncallUsersCount int64, oncallUsers string, onlineUsersCount int64, onlineUsers string, error error) {
 	dm := models.NewAuthenticatedDiscordMetricsClient()
-	guildID := os.Getenv("DISCORD_GUILD_ID")
+	guildID, ok := os.LookupEnv("DISCORD_GUILD_ID")
+	if !ok {
+		log.Fatal("DISCORD_GUILD_ID env var is required")
+	}
 
 	oncallUsersCount, oncallUsers, err := dm.GetOncallUsers(guildID)
 	if err != nil {

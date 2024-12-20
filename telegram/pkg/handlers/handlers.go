@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -26,15 +27,22 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	onlineUsersList := strings.Split(onlineUsers, ",")
 	onlineUsersListLinebreak := strings.Join(onlineUsersList, "\n")
 
+	discordInviteLink, ok := os.LookupEnv("DISCORD_INVITE_LINK")
+	if !ok {
+		log.Fatal("DISCORD_INVITE_LINK env var is required")
+	}
+
 	message := fmt.Sprintf(
 		"We have %d users having fun in the call.\n\n"+
 			"%s\n\n"+
 			"There are %d users who are one click away from having fun.\n\n"+
-			"%s",
+			"%s\n\n"+
+			"Join the party!\n%s",
 		oncallUsersCount,
 		oncallUsersListLinebreak,
 		onlineUsersCount,
 		onlineUsersListLinebreak,
+		discordInviteLink,
 	)
 
 	b.SendMessage(ctx, &bot.SendMessageParams{

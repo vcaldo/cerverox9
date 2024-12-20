@@ -39,11 +39,28 @@ type DiscordMetrics struct {
 }
 
 func NewAuthenticatedDiscordMetricsClient() *DiscordMetrics {
+	influxUrl, ok := os.LookupEnv("INFLUX_URL")
+	if !ok {
+		log.Fatal("INFLUX_URL env var is required")
+	}
+	influxToken, ok := os.LookupEnv("INFLUX_TOKEN")
+	if !ok {
+		log.Fatal("INFLUX_TOKEN env var is required")
+	}
+	influxOrg, ok := os.LookupEnv("INFLUX_ORG")
+	if !ok {
+		log.Fatal("INFLUX_ORG env var is required")
+	}
+	influxBucket, ok := os.LookupEnv("INFLUX_BUCKET")
+	if !ok {
+		log.Fatal("INFLUX_BUCKET env var is required")
+	}
+
 	return newDiscordMetricsClient(
-		os.Getenv("INFLUX_URL"),
-		os.Getenv("INFLUX_TOKEN"),
-		os.Getenv("INFLUX_ORG"),
-		os.Getenv("INFLUX_BUCKET"),
+		influxUrl,
+		influxToken,
+		influxOrg,
+		influxBucket,
 	)
 }
 
