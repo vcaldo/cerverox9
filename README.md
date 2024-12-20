@@ -1,4 +1,4 @@
-# cerverox9 bot
+# cerverox9-bot
 A Discord bot that tracks voice channel activities and user presence, storing the data in InfluxDB. A companion Telegram bot forwards real-time notifications about voice events.
 
 ## Features
