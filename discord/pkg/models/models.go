@@ -140,7 +140,7 @@ func (dm *DiscordMetrics) logUsersCount(measurementName, guildID string, userCou
 			"user_count": userCount,
 		},
 		time.Now())
-	log.Printf("Writing point: %s, %d in %s measurement", guildID, userCount, OncallUsersMeasurement)
+	log.Printf("Writing point: %s, %d in %s measurement", guildID, userCount, measurementName)
 
 	return writeAPI.WritePoint(context.Background(), p)
 }
@@ -167,12 +167,12 @@ func (dm *DiscordMetrics) LogOncallUsers(s *discordgo.Session) error {
 				oncallUsers = append(oncallUsers, member.DisplayName())
 			}
 		}
-		log.Printf("isso eh novo oncallUsersCount: %d", oncallUsersCount)
+
 		err = dm.logUsersCount(OncallUsersMeasurement, guildID, oncallUsersCount, oncallUsers)
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
 		}
-		log.Printf("Logged %d users in voice channels for guild %s", oncallUsersCount, guildID)
+		log.Printf("Logged %d on call users for guild %s", oncallUsersCount, guildID)
 
 		// Register online users
 		onlineUsersCount := 0
