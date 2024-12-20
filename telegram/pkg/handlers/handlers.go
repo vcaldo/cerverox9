@@ -49,7 +49,7 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   "🎤",
+		Text:   "📞",
 	})
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
