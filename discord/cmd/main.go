@@ -24,6 +24,7 @@ func main() {
 
 	// Register necessary Intents for the bot
 	dg.Identify.Intents = discordgo.IntentGuilds |
+		discordgo.IntentsGuildPresences |
 		discordgo.IntentGuildMembers |
 		discordgo.IntentGuildVoiceStates
 

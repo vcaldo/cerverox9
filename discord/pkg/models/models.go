@@ -161,6 +161,9 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 		oncallUsersCount := 0
 		oncallUsers := []string{}
 		for _, member := range members {
+			if member.User.Bot {
+				continue
+			}
 			vs, _ := s.State.VoiceState(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
 			if vs != nil && vs.ChannelID != "" {
 				oncallUsersCount++
@@ -178,14 +181,11 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 		onlineUsersCount := 0
 		onlineUsers := []string{}
 		for _, member := range members {
-			log.Printf("Member: %+v, %+v", member.User.Username, member.DisplayName())
-			presence, err := s.State.Presence(guildID, member.User.ID)
-			if err != nil {
-				log.Printf("error fetching presence for member %s: %v", member.User.Username, err)
+			if member.User.Bot {
 				continue
-
 			}
-
+			log.Printf("Member: %+v, %+v", member.User.Username, member.DisplayName())
+			presence, _ := s.State.Presence(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
 			if presence != nil && presence.Status != discordgo.StatusOffline {
 				log.Printf("Presence: %+v", presence.Status)
 				onlineUsersCount++
