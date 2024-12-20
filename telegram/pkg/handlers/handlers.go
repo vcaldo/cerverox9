@@ -32,12 +32,14 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		log.Fatal("DISCORD_INVITE_LINK env var is required")
 	}
 
+	// b.
+
 	message := fmt.Sprintf(
 		"We have %d users having fun in the call.\n\n"+
 			"%s\n\n"+
 			"There are %d users who are one click away from having fun.\n\n"+
 			"%s\n\n"+
-			"Join the party!\n%s",
+			"Join the party!🥳\n%s",
 		oncallUsersCount,
 		oncallUsersListLinebreak,
 		onlineUsersCount,
@@ -47,7 +49,13 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   message,
+		Text:   "🎤",
+	})
+
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:             update.Message.Chat.ID,
+		Text:               message,
+		LinkPreviewOptions: &models.LinkPreviewOptions{IsDisabled: bot.True()},
 	})
 }
 
