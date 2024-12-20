@@ -13,7 +13,7 @@ import (
 )
 
 func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	onlineUsers, usersList, err := stats.GetVoiceCallStatus()
+	oncallUsersCount, oncallUsers, onlineUsersCount, onlineUsers, err := stats.GetVoiceCallStatus()
 	if err != nil {
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,

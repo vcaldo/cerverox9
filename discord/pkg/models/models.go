@@ -101,11 +101,7 @@ func (dm *DiscordMetrics) logVoiceEvent(userID, username, UserDisplayName, guild
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (dm *DiscordMetrics) GetGuildStats() {
-
-}
-
-func (dm *DiscordMetrics) getOncallUsers(guildID string) (int64, string, error) {
+func (dm *DiscordMetrics) GetOncallUsers(guildID string) (int64, string, error) {
 	// query oncall users
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: -10m)
@@ -133,7 +129,7 @@ func (dm *DiscordMetrics) getOncallUsers(guildID string) (int64, string, error) 
 	return 0, "", fmt.Errorf("no online users found for guild %s", guildID)
 }
 
-func (dm *DiscordMetrics) getOnlineUsers(guildID string) (int64, string, error) {
+func (dm *DiscordMetrics) GetOnlineUsers(guildID string) (int64, string, error) {
 	// query online users
 	query2 := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: -10m)
@@ -153,8 +149,8 @@ func (dm *DiscordMetrics) getOnlineUsers(guildID string) (int64, string, error) 
 
 	for result.Next() {
 		record := result.Record()
-		onlineUsersCount = record.Value().(int64)
-		onlineUsers = record.Values()["user_list"].(string)
+		onlineUsersCount := record.Value().(int64)
+		onlineUsers := record.Values()["user_list"].(string)
 		return onlineUsersCount, onlineUsers, nil
 	}
 	return 0, "", fmt.Errorf("no online users found for guild %s", guildID)
