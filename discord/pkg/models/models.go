@@ -151,6 +151,7 @@ func (dm *DiscordMetrics) LogOncallUsers(s *discordgo.Session) error {
 		return fmt.Errorf("error fetching guilds: %v", err)
 	}
 	for _, guild := range guilds {
+		// Register oncall users
 		guildID := guild.ID
 		members, err := s.GuildMembers(guildID, "", 1000)
 		if err != nil {
@@ -172,22 +173,8 @@ func (dm *DiscordMetrics) LogOncallUsers(s *discordgo.Session) error {
 			return fmt.Errorf("error logging online users: %v", err)
 		}
 		log.Printf("Logged %d users in voice channels for guild %s", oncallUsersCount, guildID)
-	}
-	return nil
-}
 
-func (dm *DiscordMetrics) LogOnlineUsers(s *discordgo.Session) error {
-	guilds, err := s.UserGuilds(200, "", "", true)
-	if err != nil {
-		return fmt.Errorf("error fetching guilds: %v", err)
-	}
-	for _, guild := range guilds {
-		guildID := guild.ID
-		members, err := s.GuildMembers(guildID, "", 1000)
-		if err != nil {
-			log.Printf("error fetching members for guild %s: %v", guildID, err)
-			continue
-		}
+		// Register online users
 		onlineUsersCount := 0
 		onlineUsers := []string{}
 		for _, member := range members {
