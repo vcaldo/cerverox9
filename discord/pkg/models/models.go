@@ -101,7 +101,12 @@ func (dm *DiscordMetrics) logVoiceEvent(userID, username, UserDisplayName, guild
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string, error) {
+func (dm *DiscordMetrics) GetGuildStats() {
+
+}
+
+func (dm *DiscordMetrics) getOncallUsers(guildID string) (int64, string, error) {
+	// query oncall users
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: -10m)
 		|> filter(fn: (r) => r._measurement == "%s" and r.guild_id == "%s")
@@ -109,10 +114,38 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 		|> sort(columns: ["_time"], desc: true)
 		|> limit(n: 1)
 		|> last()`,
-
 		dm.Bucket, OncallUsersMeasurement, guildID)
+
 	queryAPI := dm.Client.QueryAPI(dm.Org)
 	result, err := queryAPI.Query(context.Background(), query)
+	if err != nil {
+		return 0, "", fmt.Errorf("error querying for oncall users: %v", err)
+	}
+	defer result.Close()
+
+	for result.Next() {
+		record := result.Record()
+		oncallUsersCount := record.Value().(int64)
+		oncallUsers := record.Values()["user_list"].(string)
+		return oncallUsersCount, oncallUsers, nil
+	}
+
+	return 0, "", fmt.Errorf("no online users found for guild %s", guildID)
+}
+
+func (dm *DiscordMetrics) getOnlineUsers(guildID string) (int64, string, error) {
+	// query online users
+	query2 := fmt.Sprintf(`from(bucket:"%s")
+		|> range(start: -10m)
+		|> filter(fn: (r) => r._measurement == "%s" and r.guild_id == "%s")
+		|> group(columns: ["guild_id"])
+		|> sort(columns: ["_time"], desc: true)
+		|> limit(n: 1)
+		|> last()`,
+		dm.Bucket, OnlineUsersMeasurement, guildID)
+
+	queryAPI := dm.Client.QueryAPI(dm.Org)
+	result, err := queryAPI.Query(context.Background(), query2)
 	if err != nil {
 		return 0, "", fmt.Errorf("error querying for online users: %v", err)
 	}
@@ -120,11 +153,10 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 
 	for result.Next() {
 		record := result.Record()
-		onlineUsers := record.Value().(int64)
-		usersList := record.Values()["user_list"].(string)
-		return onlineUsers, usersList, nil
+		onlineUsersCount = record.Value().(int64)
+		onlineUsers = record.Values()["user_list"].(string)
+		return onlineUsersCount, onlineUsers, nil
 	}
-
 	return 0, "", fmt.Errorf("no online users found for guild %s", guildID)
 }
 
