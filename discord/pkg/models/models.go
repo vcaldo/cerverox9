@@ -175,7 +175,7 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
 		}
-		log.Printf("Logged %d on call users for guild %s", oncallUsersCount, guildID)
+		log.Printf("Logged %d on call users for guild %s - %s", oncallUsersCount, guildID, guild.Name)
 
 		// Register online users
 		onlineUsersCount := 0
@@ -184,10 +184,8 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 			if member.User.Bot {
 				continue
 			}
-			log.Printf("Member: %+v, %+v", member.User.Username, member.DisplayName())
 			presence, _ := s.State.Presence(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
 			if presence != nil && presence.Status != discordgo.StatusOffline {
-				log.Printf("Presence: %+v", presence.Status)
 				onlineUsersCount++
 				onlineUsers = append(onlineUsers, member.DisplayName())
 			}
@@ -197,7 +195,7 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
 		}
-		log.Printf("Logged %d online users for guild %s", onlineUsersCount, guildID)
+		log.Printf("Logged %d online users for guild %s - %s", onlineUsersCount, guildID, guild.Name)
 	}
 	return nil
 }
