@@ -167,7 +167,7 @@ func (dm *DiscordMetrics) LogOncallUsers(s *discordgo.Session) error {
 				oncallUsers = append(oncallUsers, member.DisplayName())
 			}
 		}
-
+		log.Printf("isso eh novo oncallUsersCount: %d", oncallUsersCount)
 		err = dm.logUsersCount(OncallUsersMeasurement, guildID, oncallUsersCount, oncallUsers)
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
