@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -39,11 +40,28 @@ type DiscordMetrics struct {
 }
 
 func NewAuthenticatedDiscordMetricsClient() *DiscordMetrics {
+	influxUrl, ok := os.LookupEnv("INFLUX_URL")
+	if !ok {
+		log.Fatal("INFLUX_URL env var is required")
+	}
+	influxToken, ok := os.LookupEnv("INFLUX_TOKEN")
+	if !ok {
+		log.Fatal("INFLUX_TOKEN env var is required")
+	}
+	influxOrg, ok := os.LookupEnv("INFLUX_ORG")
+	if !ok {
+		log.Fatal("INFLUX_ORG env var is required")
+	}
+	influxBucket, ok := os.LookupEnv("INFLUX_BUCKET")
+	if !ok {
+		log.Fatal("INFLUX_BUCKET env var is required")
+	}
+
 	return newDiscordMetricsClient(
-		os.Getenv("INFLUX_URL"),
-		os.Getenv("INFLUX_TOKEN"),
-		os.Getenv("INFLUX_ORG"),
-		os.Getenv("INFLUX_BUCKET"),
+		influxUrl,
+		influxToken,
+		influxOrg,
+		influxBucket,
 	)
 }
 
@@ -101,7 +119,8 @@ func (dm *DiscordMetrics) logVoiceEvent(userID, username, UserDisplayName, guild
 	return writeAPI.WritePoint(context.Background(), p)
 }
 
-func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string, error) {
+func (dm *DiscordMetrics) GetOncallUsers(guildID string) (int64, string, error) {
+	// query oncall users
 	query := fmt.Sprintf(`from(bucket:"%s")
 		|> range(start: -10m)
 		|> filter(fn: (r) => r._measurement == "%s" and r.guild_id == "%s")
@@ -109,10 +128,38 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 		|> sort(columns: ["_time"], desc: true)
 		|> limit(n: 1)
 		|> last()`,
-
 		dm.Bucket, OncallUsersMeasurement, guildID)
+
 	queryAPI := dm.Client.QueryAPI(dm.Org)
 	result, err := queryAPI.Query(context.Background(), query)
+	if err != nil {
+		return 0, "", fmt.Errorf("error querying for oncall users: %v", err)
+	}
+	defer result.Close()
+
+	for result.Next() {
+		record := result.Record()
+		oncallUsersCount := record.Value().(int64)
+		oncallUsers := record.Values()["user_list"].(string)
+		return oncallUsersCount, oncallUsers, nil
+	}
+
+	return 0, "", fmt.Errorf("no online users found for guild %s", guildID)
+}
+
+func (dm *DiscordMetrics) GetOnlineUsers(guildID string) (int64, string, error) {
+	// query online users
+	query2 := fmt.Sprintf(`from(bucket:"%s")
+		|> range(start: -10m)
+		|> filter(fn: (r) => r._measurement == "%s" and r.guild_id == "%s")
+		|> group(columns: ["guild_id"])
+		|> sort(columns: ["_time"], desc: true)
+		|> limit(n: 1)
+		|> last()`,
+		dm.Bucket, OnlineUsersMeasurement, guildID)
+
+	queryAPI := dm.Client.QueryAPI(dm.Org)
+	result, err := queryAPI.Query(context.Background(), query2)
 	if err != nil {
 		return 0, "", fmt.Errorf("error querying for online users: %v", err)
 	}
@@ -120,11 +167,10 @@ func (dm *DiscordMetrics) GetVoiceChatOnlineUsers(guildID string) (int64, string
 
 	for result.Next() {
 		record := result.Record()
-		onlineUsers := record.Value().(int64)
-		usersList := record.Values()["user_list"].(string)
-		return onlineUsers, usersList, nil
+		onlineUsersCount := record.Value().(int64)
+		onlineUsers := record.Values()["user_list"].(string)
+		return onlineUsersCount, onlineUsers, nil
 	}
-
 	return 0, "", fmt.Errorf("no online users found for guild %s", guildID)
 }
 
@@ -186,8 +232,10 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 			}
 			presence, _ := s.State.Presence(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
 			if presence != nil && presence.Status != discordgo.StatusOffline {
-				onlineUsersCount++
-				onlineUsers = append(onlineUsers, member.DisplayName())
+				if !slices.Contains(oncallUsers, member.DisplayName()) {
+					onlineUsersCount++
+					onlineUsers = append(onlineUsers, member.DisplayName())
+				}
 			}
 		}
 

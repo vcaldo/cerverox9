@@ -14,7 +14,10 @@ import (
 
 func main() {
 	ctx := context.Background()
-	token := os.Getenv("DISCORD_BOT_TOKEN")
+	token, ok := os.LookupEnv("DISCORD_BOT_TOKEN")
+	if !ok {
+		log.Fatal("DISCORD_BOT_TOKEN env var is required")
+	}
 
 	dg, err := discordgo.New(fmt.Sprintf("Bot %s", token))
 	if err != nil {

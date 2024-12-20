@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 
@@ -18,7 +19,10 @@ func main() {
 		bot.WithDefaultHandler(handler),
 	}
 
-	token := os.Getenv("TELEGRAM_BOT_TOKEN")
+	token, ok := os.LookupEnv("TELEGRAM_BOT_TOKEN")
+	if !ok {
+		log.Fatal("TELEGRAM_BOT_TOKEN env var is required")
+	}
 	b, err := bot.New(token, opts...)
 	if err != nil {
 		panic(err)
