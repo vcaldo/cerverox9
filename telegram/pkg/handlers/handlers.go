@@ -39,7 +39,7 @@ func StatusHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 			"%s\n\n"+
 			"There are %d users who are one click away from having fun.\n\n"+
 			"%s\n\n"+
-			"Join the party!🥳\n%s",
+			"🥳 Join the party! 🥳\n%s",
 		oncallUsersCount,
 		oncallUsersListLinebreak,
 		onlineUsersCount,

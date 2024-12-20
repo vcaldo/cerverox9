@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -231,8 +232,10 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 			}
 			presence, _ := s.State.Presence(guildID, member.User.ID) // it errors out if the user is not in a voice channel, ignore it
 			if presence != nil && presence.Status != discordgo.StatusOffline {
-				onlineUsersCount++
-				onlineUsers = append(onlineUsers, member.DisplayName())
+				if !slices.Contains(oncallUsers, member.DisplayName()) {
+					onlineUsersCount++
+					onlineUsers = append(onlineUsers, member.DisplayName())
+				}
 			}
 		}
 
