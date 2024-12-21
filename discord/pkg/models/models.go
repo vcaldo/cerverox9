@@ -217,7 +217,9 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 				oncallUsers = append(oncallUsers, member.DisplayName())
 			}
 		}
-
+		if len(oncallUsers) == 0 {
+			oncallUsers = append(oncallUsers, "empty discord")
+		}
 		err = dm.logUsersCount(OncallUsersMeasurement, guildID, oncallUsersCount, oncallUsers)
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
@@ -239,7 +241,9 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 				}
 			}
 		}
-
+		if len(onlineUsers) == 0 {
+			onlineUsers = append(onlineUsers, "empty discord")
+		}
 		err = dm.logUsersCount(OnlineUsersMeasurement, guildID, onlineUsersCount, onlineUsers)
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)

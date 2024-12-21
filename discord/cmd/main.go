@@ -45,8 +45,8 @@ func main() {
 	dm := models.NewAuthenticatedDiscordMetricsClient()
 	go dm.LogUsersPresence(dg)
 
-	// Update the number of users in voice channels every 60 seconds
-	ticker := time.NewTicker(300 * time.Second)
+	// Update the number of users in voice channels every 10 seconds
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 	go func() {
 		for {
