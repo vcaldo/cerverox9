@@ -141,6 +141,7 @@ func (dm *DiscordMetrics) GetOncallUsers(guildID string) (int64, string, error) 
 		record := result.Record()
 		oncallUsersCount := record.Value().(int64)
 		oncallUsers := record.Values()["user_list"].(string)
+		log.Printf("veio isso %s", oncallUsers)
 		return oncallUsersCount, oncallUsers, nil
 	}
 
