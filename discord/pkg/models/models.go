@@ -207,6 +207,7 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 		}
 		oncallUsersCount := 0
 		oncallUsers := []string{}
+		oncallUsers = append(oncallUsers, "Discord Vazio - Ruas Cheias")
 		for _, member := range members {
 			if member.User.Bot {
 				continue
@@ -217,9 +218,7 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 				oncallUsers = append(oncallUsers, member.DisplayName())
 			}
 		}
-		if len(oncallUsers) == 0 {
-			oncallUsers = append(oncallUsers, "empty discord")
-		}
+
 		err = dm.logUsersCount(OncallUsersMeasurement, guildID, oncallUsersCount, oncallUsers)
 		if err != nil {
 			return fmt.Errorf("error logging online users: %v", err)
