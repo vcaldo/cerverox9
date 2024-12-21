@@ -31,7 +31,7 @@ A Discord bot that tracks voice channel activities and user presence, storing th
 2. Configure environment files:
          ```bash
          cp secrets.env.sample secrets.env
-         cp influx.env.sample influx-secrets.env
+         cp influx-secrets.env.sample influx-secrets.env
          ```
 3. Update environment files with your configuration:
     - In `influx-secrets.env`:
