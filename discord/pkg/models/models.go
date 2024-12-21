@@ -241,7 +241,7 @@ func (dm *DiscordMetrics) LogUsersPresence(s *discordgo.Session) error {
 			}
 		}
 		if len(onlineUsers) == 0 {
-			onlineUsers = append(onlineUsers, "empty discord")
+			onlineUsers = append(onlineUsers, "Discord cheio - Ruas vazias")
 		}
 		err = dm.logUsersCount(OnlineUsersMeasurement, guildID, onlineUsersCount, onlineUsers)
 		if err != nil {
